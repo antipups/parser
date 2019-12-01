@@ -46,7 +46,13 @@ def parse(url):
         if keyword_of_podcasts.find('#') > -1:
             keyword_of_podcasts = encode_from_html(keyword_of_podcasts)
 
-    # print(title_of_podcast, description_of_podcast, image_of_podcasts, keyword_of_podcasts)
+    # находим категории если они есть
+    categorys_of_podcast = str()
+    if html.find('category ') > -1:
+        categorys_of_field = html[html.find('category ') + 9:]
+        categorys_of_podcast += categorys_of_field[categorys_of_field.find('"') + 1:categorys_of_field.find('"/>')]
+
+    print(title_of_podcast, description_of_podcast, image_of_podcasts, keyword_of_podcasts, categorys_of_podcast)
 
     html = html[html.find('<item>'):]   # так как информация о подкасте уже собрана, обрезаем её и начинаем собирать инфу о выпусках
 
@@ -67,7 +73,7 @@ def parse(url):
 
         # переходим в тег с ссылкой на аудио
         enclosure = item_code[item_code.find('<enclosure'):]
-        mp3 = enclosure[enclosure.find('url="') + 5: enclosure.find('"/>')]    # получаем аудио
+        mp3 = enclosure[enclosure.find('url="') + 5: enclosure.find('mp3"') + 3]    # получаем аудио
 
         # получаем дату публикации выпуска
         pubdata_of_items = item_code[item_code.find('<pubDate>') + 9: item_code.find('</pubDate>')]
@@ -77,7 +83,7 @@ def parse(url):
         duration_of_items = duration_code[:duration_code.find('</')]    # получаем длительность аудио
 
         html = html[html.find('</item>') + 7:]
-        # print(encode_from_html(title_of_item), '\n', description_of_item, '\n', mp3, '\n', pubdata_of_items, '\n', duration_of_items)
+        print(encode_from_html(title_of_item), '\n', description_of_item, '\n', mp3, '\n', pubdata_of_items, '\n', duration_of_items)
 
 
 if __name__ == '__main__':
