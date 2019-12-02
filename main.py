@@ -48,13 +48,25 @@ def parse(url):
 
     # находим категории если они есть
     categorys_of_podcast = str()
-    mark = False    # флажок на подкатегорию
-    while html.find('category text="') > -1:  # считываем все категории
+    subcategorys_of_podcast = str()
+    while html.find('category ') > -1:  # считываем все категории
         html = html[html.find('category text="') + 15:]
-        categorys_of_podcast += html[: html.find('"')] + ', '
-        html = html[html.find('>') + 1:]
+        if html.find('">') < html.find('"/>'):  # если у категории есть подкатегории
+            categorys_of_podcast += html[: html.find('">')] + ', '
+            subcategorys_of_field = html[html.find('">') + 2: html.find('</itunes:category>')]
+            while subcategorys_of_field.find('category text="') > -1:
+                subcategorys_of_podcast += subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.find('"/>')]
+                subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('"/>') + 3:]
+            html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
+        else:
+            categorys_of_podcast += html[: html.find('"/>')] + ', '
 
-    print(title_of_podcast, description_of_podcast, image_of_podcasts, keyword_of_podcasts, categorys_of_podcast)
+    print('Название: ' + title_of_podcast + '\n',
+          'Описание: ' + description_of_podcast + '\n',
+          'Картинка: ' + image_of_podcasts + '\n',
+          'Ключевые слова: ' + keyword_of_podcasts + '\n',
+          'Категории: ' + categorys_of_podcast + '\n',
+          'Подкатегории: ' + subcategorys_of_podcast + '\n',)
 
     # if not {'title_of_podcast': title_of_podcast} in util.execute('SELECT title_of_podcast FROM podcasts'):
     #     util.set_new_podcast(title_of_podcast, description_of_podcast, image_of_podcasts, )
@@ -74,6 +86,8 @@ def parse(url):
 
         # получаем название выпуска
         title_of_item = item_code[item_code.find('<title>') + 7: item_code.find('</title>')]
+        if title_of_item.find('#') > -1:
+            title_of_item = encode_from_html(title_of_item)
 
         # получаем описание выпуска
         description_of_item = item_code[item_code.find('<description>') + 13: item_code.find('</description>')]
@@ -83,7 +97,8 @@ def parse(url):
 
         # переходим в тег с ссылкой на аудио
         enclosure = item_code[item_code.find('<enclosure'):]
-        mp3 = enclosure[enclosure.find('url="') + 5: enclosure.find('mp3') + 3]    # получаем аудио
+        enclosure = enclosure[enclosure.find('url="') + 5:enclosure.find('/>')]
+        mp3 = enclosure[: enclosure.find('"')]    # получаем аудио
 
         # получаем дату публикации выпуска
         pubdata_of_item = item_code[item_code.find('<pubDate>') + 9: item_code.find('</pubDate>')]
@@ -97,13 +112,20 @@ def parse(url):
         image_of_item = temp_code[temp_code.find('"') + 1: temp_code.find('"/>')]
 
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-        print(encode_from_html(title_of_item), '\n', description_of_item, '\n', mp3, '\n',
-              pubdata_of_item, '\n', duration_of_item, '\n', image_of_item)
+        print('Название выпуска: ' + title_of_item + '\n',
+              'Описание выпуска: ' + description_of_item + '\n',
+              'Музыка: ' + mp3 + '\n',
+              'Дата публикации выпуска: ' + pubdata_of_item + '\n',
+              'Длительность выпуска: ' + duration_of_item + '\n',
+              'Картинка выпуска: ' + image_of_item + '\n')
 
 
 if __name__ == '__main__':
-    parse('https://feeds.simplecast.com/CPNlXNwD')
+    # parse('https://feeds.simplecast.com/CPNlXNwD')
+    # parse('https://rss.simplecast.com/podcasts/4464/rss')
     # parse('https://podster.fm/rss.xml?pid=20066')
+    # parse('http://feeds.soundcloud.com/users/soundcloud:users:516686697/sounds.rss')
     # parse('https://podster.fm/rss.xml?pid=29605')
     # parse('https://meduza.io/rss/podcasts/peremotka')
     # parse('https://mojomedia.ru/feed-podcasts/rebyata-my-potrahalis')
+    parse('http://feeds.feedburner.com/bizipodcast')
