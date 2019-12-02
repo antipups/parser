@@ -49,13 +49,10 @@ def parse(url):
     # находим категории если они есть
     categorys_of_podcast = str()
     mark = False    # флажок на подкатегорию
-    while html.find('category ') > -1:  # считываем все категории
+    while html.find('category text="') > -1:  # считываем все категории
         html = html[html.find('category text="') + 15:]
-        if html.find('">') < html.find('"/>'):  # если у категории есть подкатегории
-            categorys_of_podcast += html[: html.find('">')] + ', '
-            html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
-        else:
-            categorys_of_podcast += html[: html.find('"/>')] + ', '
+        categorys_of_podcast += html[: html.find('"')] + ', '
+        html = html[html.find('>') + 1:]
 
     print(title_of_podcast, description_of_podcast, image_of_podcasts, keyword_of_podcasts, categorys_of_podcast)
 
