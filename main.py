@@ -3,6 +3,14 @@ import requests
 import util
 
 
+def check_on_shit(string):      # чистим полученные строки от говна, типа сидата или спецсимволы хтмл
+    if string.find('#') > -1:
+        string = encode_from_html(string)
+    if string.find('<![CDATA[') > -1:
+        string = string[string.find('<![CDATA[') + 9: string.find(']]>')]
+    return string
+
+
 def encode_from_html(string):   # перекодировка из html символов в обычные
     while re.search(r'&#\d{1,4};', string) is not None:
         swap_word = re.search(r'&#\d{1,4};', string)[0]    # копируем изменяемое слово
@@ -12,6 +20,14 @@ def encode_from_html(string):   # перекодировка из html симв�
             new_word = chr(int(re.search(swap_word, string)[0][-5:-1]))
         string = re.sub(swap_word, new_word, string)
     return string
+
+
+def clear_from_cdata(string):   # чистим строку от cdata
+    return string[string.find('<![CDATA[') + 9: string.find(']]>')]
+
+
+def convert_of_time(time):      # конвертация времени из секунд в часы
+    return str(time // 3600) + ':' + str(time // 60 % 60) + ':' + str(time % 60)
 
 
 def parse(url):
@@ -25,14 +41,12 @@ def parse(url):
     html = requests.get(url).text
     # находим название подкаста
     title_of_podcast = html[html.find('<title>') + 7: html.find('</title>')]
-    if title_of_podcast.find('#') > -1:  # если встретили спецсимволы html
-        title_of_podcast = encode_from_html(title_of_podcast)
+    title_of_podcast = check_on_shit(title_of_podcast)
+
 
     # находим описание подкаста
     description_of_podcast = html[html.find('<description>') + 13: html.find('</description>')]
-    if description_of_podcast.find('<![CDATA[') > -1:  # если есть cdata (не читаемая интерпр. хуйня)
-        description_of_podcast = description_of_podcast[
-                                 description_of_podcast.find('<![CDATA[') + 9: description_of_podcast.find(']]>')]
+    description_of_podcast = check_on_shit(description_of_podcast)
 
     # находим картинку подкаста
     image_of_podcasts = html[html.find('<image>') + 7: html.find('</image>')]
@@ -43,28 +57,39 @@ def parse(url):
     if html.find('keywords>') > -1:     # если есть ключевые слова
         temp_html = html[html.find('keywords>') + 9:]   # временная срезка, для нахождения ключ. слов
         keyword_of_podcasts += temp_html[: temp_html.find('</')]
-        if keyword_of_podcasts.find('#') > -1:
-            keyword_of_podcasts = encode_from_html(keyword_of_podcasts)
+        keyword_of_podcasts = check_on_shit(keyword_of_podcasts)
+
+    # находим автора, если он есть
+    author_of_podcast = str()
+    if html.find('author') > -1:
+        temp_code = html[html.find('author>') + 7:]
+        author_of_podcast = temp_code[:temp_code.find('<')]
 
     # находим категории если они есть
     categorys_of_podcast = str()
     subcategorys_of_podcast = str()
     while html.find('category ') > -1:  # считываем все категории
         html = html[html.find('category text="') + 15:]
-        if html.find('">') < html.find('"/>'):  # если у категории есть подкатегории
-            categorys_of_podcast += html[: html.find('">')] + ', '
-            subcategorys_of_field = html[html.find('">') + 2: html.find('</itunes:category>')]
+        if html.find('>') < html.find('/>'):  # если у категории есть подкатегории
+            categorys_of_podcast += html[: html.find('"')] + ', '
+            subcategorys_of_field = html[html.find('>') + 1: html.find('</itunes:category>')]
             while subcategorys_of_field.find('category text="') > -1:
-                subcategorys_of_podcast += subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.find('"/>')]
-                subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('"/>') + 3:]
+                subcategorys_of_podcast += subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.find('"')]
+                subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('>') + 1:]
             html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
         else:
-            categorys_of_podcast += html[: html.find('"/>')] + ', '
+            categorys_of_podcast += html[: html.find('"')] + ', '
+
+    if categorys_of_podcast:
+        categorys_of_podcast = check_on_shit(categorys_of_podcast)
+        if subcategorys_of_podcast:
+            subcategorys_of_podcast = check_on_shit(subcategorys_of_podcast)
 
     print('Название: ' + title_of_podcast + '\n',
           'Описание: ' + description_of_podcast + '\n',
           'Картинка: ' + image_of_podcasts + '\n',
           'Ключевые слова: ' + keyword_of_podcasts + '\n',
+          'Автор: ' + author_of_podcast + '\n',
           'Категории: ' + categorys_of_podcast + '\n',
           'Подкатегории: ' + subcategorys_of_podcast + '\n',)
 
@@ -86,14 +111,11 @@ def parse(url):
 
         # получаем название выпуска
         title_of_item = item_code[item_code.find('<title>') + 7: item_code.find('</title>')]
-        if title_of_item.find('#') > -1:
-            title_of_item = encode_from_html(title_of_item)
+        title_of_item = check_on_shit(title_of_item)
 
         # получаем описание выпуска
         description_of_item = item_code[item_code.find('<description>') + 13: item_code.find('</description>')]
-        if description_of_item.find('<![CDATA[') > -1:
-            description_of_item = description_of_item[
-                                     description_of_item.find('<![CDATA[') + 9: description_of_item.find(']]>')]
+        description_of_item = check_on_shit(description_of_item)
 
         # переходим в тег с ссылкой на аудио
         enclosure = item_code[item_code.find('<enclosure'):]
@@ -106,10 +128,13 @@ def parse(url):
         # получаем область с длительностью аудио
         temp_code = item_code[item_code.find('duration>') + 9: item_code.find('duration>') + 20]
         duration_of_item = temp_code[:temp_code.find('</')]    # получаем длительность аудио
+        if duration_of_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
+            duration_of_item = convert_of_time(int(duration_of_item))
 
         # получаем область с картинкой выпуска
         temp_code = item_code[item_code.find('image ') + 6:]
-        image_of_item = temp_code[temp_code.find('"') + 1: temp_code.find('"/>')]
+        temp_code = temp_code[temp_code.find('href="') + 6:]
+        image_of_item = temp_code[: temp_code.find('"')]
 
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
         print('Название выпуска: ' + title_of_item + '\n',
@@ -128,4 +153,6 @@ if __name__ == '__main__':
     # parse('https://podster.fm/rss.xml?pid=29605')
     # parse('https://meduza.io/rss/podcasts/peremotka')
     # parse('https://mojomedia.ru/feed-podcasts/rebyata-my-potrahalis')
-    parse('http://feeds.feedburner.com/bizipodcast')
+    # parse('http://feeds.feedburner.com/bizipodcast')
+    # parse('https://anchor.fm/s/84ed588/podcast/rss')
+    parse('https://podster.fm/rss.xml?pid=40940')
