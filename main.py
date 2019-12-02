@@ -74,12 +74,11 @@ def parse(url):
             categorys_of_podcast += html[: html.find('"')] + ', '
             subcategorys_of_field = html[html.find('>') + 1: html.find('</itunes:category>')]
             while subcategorys_of_field.find('category text="') > -1:
-                subcategorys_of_podcast += subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.find('"')]
-                subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('>') + 1:]
+                subcategorys_of_podcast += '#' + subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.rfind('"')]
+                subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('/>') + 2:]
             html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
         else:
             categorys_of_podcast += html[: html.find('"')] + ', '
-
     if categorys_of_podcast:
         categorys_of_podcast = check_on_shit(categorys_of_podcast)
         if subcategorys_of_podcast:
@@ -155,4 +154,5 @@ if __name__ == '__main__':
     # parse('https://mojomedia.ru/feed-podcasts/rebyata-my-potrahalis')
     # parse('http://feeds.feedburner.com/bizipodcast')
     # parse('https://anchor.fm/s/84ed588/podcast/rss')
-    parse('https://podster.fm/rss.xml?pid=40940')
+    # parse('https://podster.fm/rss.xml?pid=40940')
+    parse('http://sharkov.podfm.ru/rss/rss.xml')
