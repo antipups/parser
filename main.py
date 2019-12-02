@@ -52,7 +52,12 @@ def parse(url):
         categorys_of_field = html[html.find('category ') + 9:]
         categorys_of_podcast += categorys_of_field[categorys_of_field.find('"') + 1:categorys_of_field.find('"/>')]
 
-    print(title_of_podcast, description_of_podcast, image_of_podcasts, keyword_of_podcasts, categorys_of_podcast)
+    # print(title_of_podcast, description_of_podcast, image_of_podcasts, keyword_of_podcasts, categorys_of_podcast)
+
+    """
+        Далее идем к выпускам подкаста, именуется этот тег в rss как item, и его столько сколько всего выпусков.
+        Имеем цикл, который ходит по этим тегам, из каждого тега выкачиваем ввсё что в нём есть.
+    """
 
     html = html[html.find('<item>'):]   # так как информация о подкасте уже собрана, обрезаем её и начинаем собирать инфу о выпусках
 
@@ -73,22 +78,27 @@ def parse(url):
 
         # переходим в тег с ссылкой на аудио
         enclosure = item_code[item_code.find('<enclosure'):]
-        mp3 = enclosure[enclosure.find('url="') + 5: enclosure.find('mp3"') + 3]    # получаем аудио
+        mp3 = enclosure[enclosure.find('url="') + 5: enclosure.find('mp3') + 3]    # получаем аудио
 
         # получаем дату публикации выпуска
-        pubdata_of_items = item_code[item_code.find('<pubDate>') + 9: item_code.find('</pubDate>')]
+        pubdata_of_item = item_code[item_code.find('<pubDate>') + 9: item_code.find('</pubDate>')]
 
         # получаем область с длительностью аудио
-        duration_code = item_code[item_code.find('duration>') + 9: item_code.find('duration>') + 20]
-        duration_of_items = duration_code[:duration_code.find('</')]    # получаем длительность аудио
+        temp_code = item_code[item_code.find('duration>') + 9: item_code.find('duration>') + 20]
+        duration_of_item = temp_code[:temp_code.find('</')]    # получаем длительность аудио
 
-        html = html[html.find('</item>') + 7:]
-        print(encode_from_html(title_of_item), '\n', description_of_item, '\n', mp3, '\n', pubdata_of_items, '\n', duration_of_items)
+        # получаем область с картинкой выпуска
+        temp_code = item_code[item_code.find('image ') + 6:]
+        image_of_item = temp_code[temp_code.find('"') + 1: temp_code.find('"/>')]
+
+        html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
+        print(encode_from_html(title_of_item), '\n', description_of_item, '\n', mp3, '\n',
+              pubdata_of_item, '\n', duration_of_item, '\n', image_of_item)
 
 
 if __name__ == '__main__':
-    # parse('https://feeds.simplecast.com/CPNlXNwD')
+    parse('https://feeds.simplecast.com/CPNlXNwD')
     # parse('https://podster.fm/rss.xml?pid=20066')
     # parse('https://podster.fm/rss.xml?pid=29605')
-    parse('https://meduza.io/rss/podcasts/peremotka')
+    # parse('https://meduza.io/rss/podcasts/peremotka')
     # parse('https://mojomedia.ru/feed-podcasts/rebyata-my-potrahalis')
