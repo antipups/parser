@@ -1,6 +1,6 @@
 import re
-
 import requests
+import util
 
 
 def encode_from_html(string):   # перекодировка из html символов в обычные
@@ -48,11 +48,19 @@ def parse(url):
 
     # находим категории если они есть
     categorys_of_podcast = str()
-    if html.find('category ') > -1:
-        categorys_of_field = html[html.find('category ') + 9:]
-        categorys_of_podcast += categorys_of_field[categorys_of_field.find('"') + 1:categorys_of_field.find('"/>')]
+    mark = False    # флажок на подкатегорию
+    while html.find('category ') > -1:  # считываем все категории
+        html = html[html.find('category text="') + 15:]
+        if html.find('">') < html.find('"/>'):  # если у категории есть подкатегории
+            categorys_of_podcast += html[: html.find('">')] + ', '
+            html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
+        else:
+            categorys_of_podcast += html[: html.find('"/>')] + ', '
 
-    # print(title_of_podcast, description_of_podcast, image_of_podcasts, keyword_of_podcasts, categorys_of_podcast)
+    print(title_of_podcast, description_of_podcast, image_of_podcasts, keyword_of_podcasts, categorys_of_podcast)
+
+    # if not {'title_of_podcast': title_of_podcast} in util.execute('SELECT title_of_podcast FROM podcasts'):
+    #     util.set_new_podcast(title_of_podcast, description_of_podcast, image_of_podcasts, )
 
     """
         Далее идем к выпускам подкаста, именуется этот тег в rss как item, и его столько сколько всего выпусков.
