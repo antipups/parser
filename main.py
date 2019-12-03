@@ -4,10 +4,12 @@ import util
 
 
 def check_on_shit(string):      # чистим полученные строки от говна, типа сидата или спецсимволы хтмл
-    if string.find('#') > -1:
+    if string.find('&#') > -1:
         string = encode_from_html(string)
-    if string.find('<![CDATA[') > -1:
+    if string.find('<![CDATA[') > -1:   # чистим строку от cdata
         string = string[string.find('<![CDATA[') + 9: string.find(']]>')]
+    if string.find('&lt') > -1:
+        string = clear_from_decor(string)
     return string
 
 
@@ -22,12 +24,12 @@ def encode_from_html(string):   # перекодировка из html симв�
     return string
 
 
-def clear_from_cdata(string):   # чистим строку от cdata
-    return string[string.find('<![CDATA[') + 9: string.find(']]>')]
-
-
-def clear_from_decor(string):
-    pass
+def clear_from_decor(string):   # чистим от плохой рссленты (c декором которая)
+    while string.startswith('&lt;'):    # чистим от тега lt(он обычно всё инициирует, таблицы, картинки)
+        string = string[string.find('&gt;') + 4:]
+    while string.find('&lt;') > -1:     # опять таки чистим от него же но уже не в начале текста
+        string = string[:string.find('&lt;')] + '\n' + string[string.find('&gt;') + 4:]
+    return string
 
 
 def convert_of_time(time):      # конвертация времени из секунд в часы
@@ -69,9 +71,9 @@ def parse(url):
 
     # находим автора, если он есть
     author_of_podcast = str()
-    if html.find('author') > -1:
+    if html.find('author>') > -1:
         temp_code = html[html.find('author>') + 7:]
-        author_of_podcast = temp_code[:temp_code.find('<')]
+        author_of_podcast = check_on_shit(temp_code[:temp_code.find('</')])
 
     # находим категории если они есть
     categorys_of_podcast = str()
@@ -132,10 +134,12 @@ def parse(url):
         pubdata_of_item = item_code[item_code.find('<pubDate>') + 9: item_code.find('</pubDate>')]
 
         # получаем область с длительностью аудио
-        temp_code = item_code[item_code.find('duration>') + 9: item_code.find('duration>') + 20]
-        duration_of_item = temp_code[:temp_code.find('</')]    # получаем длительность аудио
-        if duration_of_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
-            duration_of_item = convert_of_time(int(duration_of_item))
+        duration_of_item = str()
+        if item_code.find('duration') > -1:
+            temp_code = item_code[item_code.find('duration>') + 9: item_code.find('duration>') + 20]
+            duration_of_item = temp_code[:temp_code.find('</')]    # получаем длительность аудио
+            if duration_of_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
+                duration_of_item = convert_of_time(int(duration_of_item))
 
         # получаем картинку выпуска если такова есть
         image_of_item = str()
@@ -172,4 +176,7 @@ if __name__ == '__main__':
     # parse('http://feeds.feedburner.com/DariaSadovaya')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:328939120/sounds.rss')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:132344904/sounds.rss')
-    parse('http://feeds.feedburner.com/pod24fps')
+    # parse('http://feeds.feedburner.com/pod24fps')
+    # parse('https://anchor.fm/s/6f169f8/podcast/rss')
+    # parse('http://feeds.soundcloud.com/users/soundcloud:users:679508342/sounds.rss')
+    parse('http://feeds.feedburner.com/americhka/oBlg')
