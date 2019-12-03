@@ -26,6 +26,10 @@ def clear_from_cdata(string):   # чистим строку от cdata
     return string[string.find('<![CDATA[') + 9: string.find(']]>')]
 
 
+def clear_from_decor(string):
+    pass
+
+
 def convert_of_time(time):      # конвертация времени из секунд в часы
     return str(time // 3600) + ':' + str(time // 60 % 60) + ':' + str(time % 60)
 
@@ -38,19 +42,23 @@ def parse(url):
         картинки;           # есть всегда
         ключевых слов;      # может и не быть, посему есть проверка, тоже может быть в html спецсимволах
     """
-    html = requests.get(url).text
+    html = requests.get(url).content.decode('utf-8')
     # находим название подкаста
     title_of_podcast = html[html.find('<title>') + 7: html.find('</title>')]
     title_of_podcast = check_on_shit(title_of_podcast)
-
 
     # находим описание подкаста
     description_of_podcast = html[html.find('<description>') + 13: html.find('</description>')]
     description_of_podcast = check_on_shit(description_of_podcast)
 
     # находим картинку подкаста
-    image_of_podcasts = html[html.find('<image>') + 7: html.find('</image>')]
-    image_of_podcasts = image_of_podcasts[image_of_podcasts.find('<url>') + 5: image_of_podcasts.find('</url>')]
+    if html.find('<image>') > -1:
+        image_of_podcasts = html[html.find('<image>') + 7: html.find('</image>')]
+        image_of_podcasts = image_of_podcasts[image_of_podcasts.find('<url>') + 5: image_of_podcasts.find('</url>')]
+    else:
+        image_of_podcasts = html[html.find('image>') + 7:]
+        image_of_podcasts = image_of_podcasts[image_of_podcasts.find('href="') + 6:]
+        image_of_podcasts = image_of_podcasts[: image_of_podcasts.find('"')]
 
     # находим ключевые слова если они есть
     keyword_of_podcasts = str()
@@ -102,7 +110,6 @@ def parse(url):
 
     html = html[html.find('<item>'):]   # так как информация о подкасте уже собрана, обрезаем её и начинаем собирать инфу о выпусках
 
-    ls_of_items = []    # впредь выпуски будут items, это список со всеми выпусками
     while html.find('<item>') > -1:    # до тех пор пока находим новый выпуск
 
         # получаем блок с этим itemом, чтоб работать не по всей странице
@@ -130,10 +137,12 @@ def parse(url):
         if duration_of_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
             duration_of_item = convert_of_time(int(duration_of_item))
 
-        # получаем область с картинкой выпуска
-        temp_code = item_code[item_code.find('image ') + 6:]
-        temp_code = temp_code[temp_code.find('href="') + 6:]
-        image_of_item = temp_code[: temp_code.find('"')]
+        # получаем картинку выпуска если такова есть
+        image_of_item = str()
+        if item_code.find('image') > -1:
+            temp_code = item_code[item_code.find('image') + 5:]
+            temp_code = temp_code[temp_code.find('href="') + 6:]
+            image_of_item = temp_code[: temp_code.find('"')]
 
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
         print('Название выпуска: ' + title_of_item + '\n',
@@ -155,4 +164,12 @@ if __name__ == '__main__':
     # parse('http://feeds.feedburner.com/bizipodcast')
     # parse('https://anchor.fm/s/84ed588/podcast/rss')
     # parse('https://podster.fm/rss.xml?pid=40940')
-    parse('http://sharkov.podfm.ru/rss/rss.xml')
+    # parse('http://sharkov.podfm.ru/rss/rss.xml')
+    # parse('https://feeds.fireside.fm/batinakonsol/rss')
+    # parse('https://web-standards.ru/podcast/feed/')
+    # parse('https://feeds.simplecast.com/hbz_rFz4')
+    # parse('https://mojomedia.ru/feed-podcasts/dikie-utki')
+    # parse('http://feeds.feedburner.com/DariaSadovaya')
+    # parse('http://feeds.soundcloud.com/users/soundcloud:users:328939120/sounds.rss')
+    # parse('http://feeds.soundcloud.com/users/soundcloud:users:132344904/sounds.rss')
+    parse('http://feeds.feedburner.com/pod24fps')
