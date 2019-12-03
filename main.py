@@ -36,6 +36,31 @@ def convert_of_time(time):      # конвертация времени из с�
     return str(time // 3600) + ':' + str(time // 60 % 60) + ':' + str(time % 60)
 
 
+def parse_category(html):   # парсим категории
+    categorys_of_podcast, subcategorys_of_podcast = str(), str()
+    while html.find('category ') > -1:  # считываем все категории
+        html = html[html.find('category text="') + 15:]
+        if html.find('>') < html.find('/>'):  # если у категории есть подкатегории
+            categorys_of_podcast += html[: html.find('"')] + ', '
+            subcategorys_of_field = html[html.find('>') + 1: html.find('</itunes:category>')]
+            while subcategorys_of_field.find('category text="') > -1:
+                subcategorys_of_podcast += '#' + subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.rfind('"')]
+                subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('/>') + 2:]
+            html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
+        else:
+            categorys_of_podcast += html[: html.find('"')] + ', '
+    if categorys_of_podcast:
+        categorys_of_podcast = check_on_shit(categorys_of_podcast)
+        if subcategorys_of_podcast:
+            subcategorys_of_podcast = check_on_shit(subcategorys_of_podcast)
+    return categorys_of_podcast, subcategorys_of_podcast
+
+
+def parse_keywords(html):
+    temp_html = html[html.find('keywords>') + 9:]  # временная срезка, для нахождения ключ. слов
+    return check_on_shit(temp_html[: temp_html.find('</')])
+
+
 def parse(url):
     """
         Первая часть функции, парсинг самого подкаста, а именно:
@@ -65,9 +90,7 @@ def parse(url):
     # находим ключевые слова если они есть
     keyword_of_podcasts = str()
     if html.find('keywords>') > -1:     # если есть ключевые слова
-        temp_html = html[html.find('keywords>') + 9:]   # временная срезка, для нахождения ключ. слов
-        keyword_of_podcasts += temp_html[: temp_html.find('</')]
-        keyword_of_podcasts = check_on_shit(keyword_of_podcasts)
+        keyword_of_podcasts = parse_keywords(html[:html.find('<item>')])
 
     # находим автора, если он есть
     author_of_podcast = str()
@@ -76,23 +99,7 @@ def parse(url):
         author_of_podcast = check_on_shit(temp_code[:temp_code.find('</')])
 
     # находим категории если они есть
-    categorys_of_podcast = str()
-    subcategorys_of_podcast = str()
-    while html.find('category ') > -1:  # считываем все категории
-        html = html[html.find('category text="') + 15:]
-        if html.find('>') < html.find('/>'):  # если у категории есть подкатегории
-            categorys_of_podcast += html[: html.find('"')] + ', '
-            subcategorys_of_field = html[html.find('>') + 1: html.find('</itunes:category>')]
-            while subcategorys_of_field.find('category text="') > -1:
-                subcategorys_of_podcast += '#' + subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.rfind('"')]
-                subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('/>') + 2:]
-            html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
-        else:
-            categorys_of_podcast += html[: html.find('"')] + ', '
-    if categorys_of_podcast:
-        categorys_of_podcast = check_on_shit(categorys_of_podcast)
-        if subcategorys_of_podcast:
-            subcategorys_of_podcast = check_on_shit(subcategorys_of_podcast)
+    categorys_of_podcast, subcategorys_of_podcast = parse_category(html[:html.find('<item>')])
 
     print('Название: ' + title_of_podcast + '\n',
           'Описание: ' + description_of_podcast + '\n',
@@ -143,10 +150,17 @@ def parse(url):
 
         # получаем картинку выпуска если такова есть
         image_of_item = str()
-        if item_code.find('image') > -1:
+        if item_code.find('image') > -1 and item_code.find('"image"') == -1:
             temp_code = item_code[item_code.find('image') + 5:]
             temp_code = temp_code[temp_code.find('href="') + 6:]
             image_of_item = temp_code[: temp_code.find('"')]
+
+        categorys_of_item, subcategorys_of_item = parse_category(html[:html.find('</item>')])
+
+        # находим ключевые слова если они есть
+        keyword_of_item = str()
+        if html.find('keywords>') > -1:  # если есть ключевые слова
+            keyword_of_item = parse_keywords(html[:html.find('</item>')])
 
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
         print('Название выпуска: ' + title_of_item + '\n',
@@ -154,7 +168,10 @@ def parse(url):
               'Музыка: ' + mp3 + '\n',
               'Дата публикации выпуска: ' + pubdata_of_item + '\n',
               'Длительность выпуска: ' + duration_of_item + '\n',
-              'Картинка выпуска: ' + image_of_item + '\n')
+              'Картинка выпуска: ' + image_of_item + '\n',
+              'Категории выпуска: ' + categorys_of_item + '\n',
+              'Подкатегории выпуска: ' + subcategorys_of_item + '\n',
+              'Ключевые слова выпуска: ' + keyword_of_item + '\n',)
 
 
 if __name__ == '__main__':
@@ -180,3 +197,5 @@ if __name__ == '__main__':
     # parse('https://anchor.fm/s/6f169f8/podcast/rss')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:679508342/sounds.rss')
     parse('http://feeds.feedburner.com/americhka/oBlg')
+    # parse('https://feeds.simplecast.com/TicU3npd')
+    # parse('https://podster.fm/rss.xml?pid=42935')
