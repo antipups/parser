@@ -10,7 +10,7 @@ def check_on_shit(string):      # чистим полученные строки
         string = string[string.find('<![CDATA[') + 9: string.find(']]>')]
     if string.find('&lt') > -1:
         string = clear_from_decor(string)
-    string = clear_from_tegs(string)
+    string = clear_from_tags(string)
     return string
 
 
@@ -36,7 +36,7 @@ def clear_from_decor(string):   # чистим от плохой рсслент�
     return string
 
 
-def clear_from_tegs(string):
+def clear_from_tags(string):
     if string.find('<p>') > -1:
         string = string.replace('<p>', '')
         string = string.replace('</p>', '')
@@ -60,7 +60,7 @@ def parse_category(html):   # парсим категории
             categorys += html[: html.find('"')] + ', '
             subcategorys_of_field = html[html.find('>') + 1: html.find('</itunes:category>')]
             while subcategorys_of_field.find('category text="') > -1:
-                subcategorys += '#' + subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.rfind('"')]
+                subcategorys += '#' + subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.rfind('"')]  + ', '
                 subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('/>') + 2:]
             html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
         else:
@@ -69,12 +69,12 @@ def parse_category(html):   # парсим категории
         categorys = check_on_shit(categorys)
         if subcategorys:
             subcategorys = check_on_shit(subcategorys)
-    return categorys, subcategorys
+    return categorys.split(', '), subcategorys.split(', ')
 
 
 def parse_keywords(html):
     temp_html = html[html.find('keywords>') + 9:]  # временная срезка, для нахождения ключ. слов
-    return check_on_shit(temp_html[: temp_html.find('</')])
+    return check_on_shit(temp_html[: temp_html.find('</')]).replace(' ', '').split(',')
 
 
 def parse_description(html):
@@ -122,17 +122,16 @@ def parse(url):
     # находим категории если они есть
     categorys_of_podcast, subcategorys_of_podcast = parse_category(pre_item_html)
 
-    print('Название: ' + title_of_podcast + '\n',
-          'Описание: ' + description_of_podcast + '\n',
-          'Картинка: ' + image_of_podcasts + '\n',
-          'Ключевые слова: ' + keyword_of_podcasts + '\n',
-          'Автор: ' + author_of_podcast + '\n',
-          'Категории: ' + categorys_of_podcast + '\n',
-          'Подкатегории: ' + subcategorys_of_podcast + '\n',)
+    # print('Название: ' + title_of_podcast + '\n',
+    #       'Описание: ' + description_of_podcast + '\n',
+    #       'Картинка: ' + image_of_podcasts + '\n',
+    #       'Ключевые слова: ' + keyword_of_podcasts + '\n',
+    #       'Автор: ' + author_of_podcast + '\n',
+    #       'Категории: ' + categorys_of_podcast + '\n',
+    #       'Подкатегории: ' + subcategorys_of_podcast + '\n',)
 
-    # if not {'title_of_podcast': title_of_podcast} in util.execute('SELECT title_of_podcast FROM podcasts'):
-    #     util.set_new_podcast(title_of_podcast, description_of_podcast, image_of_podcasts, )
-
+    tags = (categorys_of_podcast, subcategorys_of_podcast, keyword_of_podcasts)
+    print(tags)
     """
         Далее идем к выпускам подкаста, именуется этот тег в rss как item, и его столько сколько всего выпусков.
         Имеем цикл, который ходит по этим тегам, из каждого тега выкачиваем ввсё что в нём есть.
@@ -182,16 +181,19 @@ def parse(url):
         if item_code.find('keywords>') > -1:  # если есть ключевые слова
             keyword_of_item = parse_keywords(item_code[:item_code.find('</item>')])
 
+        tags = (categorys_of_item, subcategorys_of_item, keyword_of_item)
+        print(tags)
+
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-        print('Название выпуска: ' + title_of_item + '\n',
-              'Описание выпуска: ' + description_of_item + '\n',
-              'Музыка: ' + mp3 + '\n',
-              'Дата публикации выпуска: ' + pubdata_of_item + '\n',
-              'Длительность выпуска: ' + duration_of_item + '\n',
-              'Картинка выпуска: ' + image_of_item + '\n',
-              'Категории выпуска: ' + categorys_of_item + '\n',
-              'Подкатегории выпуска: ' + subcategorys_of_item + '\n',
-              'Ключевые слова выпуска: ' + keyword_of_item + '\n',)
+        # print('Название выпуска: ' + title_of_item + '\n',
+        #       'Описание выпуска: ' + description_of_item + '\n',
+        #       'Музыка: ' + mp3 + '\n',
+        #       'Дата публикации выпуска: ' + pubdata_of_item + '\n',
+        #       'Длительность выпуска: ' + duration_of_item + '\n',
+        #       'Картинка выпуска: ' + image_of_item + '\n',
+        #       'Категории выпуска: ' + categorys_of_item + '\n',
+        #       'Подкатегории выпуска: ' + subcategorys_of_item + '\n',
+        #       'Ключевые слова выпуска: ' + keyword_of_item + '\n',)
 
 
 if __name__ == '__main__':
@@ -231,4 +233,13 @@ if __name__ == '__main__':
     # parse('http://feeds.feedburner.com/kommentator_podcast')
     # parse('https://echo.msk.ru/programs/garage/rss-audio.xml')
     # parse('https://pogovorim.stellav.ru/feed/podcast/')
-    parse('https://feeds.simplecast.com/o2q3_tiT')
+    # parse('https://feeds.simplecast.com/o2q3_tiT')
+    # parse('https://meduza.io/rss/podcasts/delo-sluchaya')
+    # parse('https://anchor.fm/s/d6b7490/podcast/rss')
+    # parse('https://podster.fm/rss.xml?pid=69579')
+    # parse('https://pinecast.com/feed/designer')
+    # parse('http://feeds.soundcloud.com/users/soundcloud:users:436210245/sounds.rss')
+    # parse('http://feeds.soundcloud.com/users/soundcloud:users:602278230/sounds.rss')
+    # parse('https://podster.fm/rss.xml?pid=35648')
+    parse('https://feeds.simplecast.com/v1cJ8X2Z')
+    pass

@@ -47,12 +47,17 @@ def execute(sql, *args, commit=False):
         return ans
 
 
-def set_new_podcast(title_of_podcast, description_of_podcasts, url_of_image_of_podcast):
-    execute('INSERT INTO podcasts (title_of_podcast, description_of_podcast, url_of_image_of_podcast) '
-            'VALUES (%(p)s, %(p)s, %(p)s)', title_of_podcast, description_of_podcasts, url_of_image_of_podcast, commit=True)
+def set_new_podcast(title_of_podcast, description_of_podcasts, url_of_image_of_podcast, author_of_podcast, tags_of_podcast):
+    print(tags_of_podcast)
+    # execute('INSERT INTO podcasts (title_of_podcast, description_of_podcast, url_of_image_of_podcast, author_of_podcast) '
+    #         'VALUES (%(p)s, %(p)s, %(p)s, %(p)s)', title_of_podcast, description_of_podcasts, url_of_image_of_podcast, author_of_podcast,
+    #         commit=True)
+    # id_of_podcast = execute('SELECT id_of_podcasts FROM podcasts WHERE title_of_podcast = "(%(p)s)"', title_of_podcast)[0].get('title_of_podcast')
+    # execute('INSERT INTO tags_of_podcasts () VALUES (%(p)s, %(p)s)', id_of_podcast,
+    #         commit=True)
 
 
-def set_new_audio(title_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio, pubdata_of_audio, duration_of_audio):
+def set_new_item(title_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio, pubdata_of_audio, duration_of_audio):
     id_of_podcast = execute('SELECT id_of_podcast FROM podcasts WHERE title_of_podcast = %(p)s', title_of_podcast)[0].get('id_of_podcast')
     execute('INSERT INTO audio (id_of_podcast, titile_of_audio, description_of_audio, audio, image_of_audio, pubdata_of_audio, duration_of_audio)'
             ' VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', id_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio,
