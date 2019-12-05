@@ -41,7 +41,7 @@ def clear_from_tags(string):
         string = string.replace('<p>', '')
         string = string.replace('</p>', '')
     if string.find('<a href="') > -1:
-        string = string[:string.find('<a href="')] + string[string.find('<a href="') + 9: string.find('">')] + string[string.find('">') + 3:] + ' '
+        string = string[:string.find('<a href="')] + string[string.find('">') + 3:] + ' '
     if string.find('<strong>') > -1:
         string = string.replace('<strong>', '')
 
@@ -69,7 +69,7 @@ def parse_category(html):   # парсим категории
         categorys = check_on_shit(categorys)
         if subcategorys:
             subcategorys = check_on_shit(subcategorys)
-    return categorys.split(', '), subcategorys.split(', ')
+    return categorys, subcategorys.split(', ')
 
 
 def parse_keywords(html):
@@ -82,13 +82,18 @@ def parse_description(html):
     return check_on_shit(temp_code[: temp_code.find('</')])
 
 
+def clear_pubdata(string):
+    dict_of_day = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+                   'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
+    month = re.search(r'\w\w\w', string)[0]
+    string = re.sub(month, dict_of_day.get(month), string)  # запуливаем вместо названия месяца номер месяца
+    string = re.sub(r'[ :]', '', string)    # вместо пробела и двоиточия ничего, в инт бахаем
+    return string[4:8] + string[2:4] + string[:2] + string[-6:]   # подводим под шаблон бд
+
+
 def parse(url):
     """
-        Первая часть функции, парсинг самого подкаста, а именно:
-        его названия;       # есть всегда, но может быть в html спецсимволах, посему сделана функция
-        описания;           # есть всегда
-        картинки;           # есть всегда
-        ключевых слов;      # может и не быть, посему есть проверка, тоже может быть в html спецсимволах
+
     """
     html = requests.get(url).content.decode('utf-8')
     pre_item_html = html[:html.find('<item>')]
@@ -130,8 +135,10 @@ def parse(url):
     #       'Категории: ' + categorys_of_podcast + '\n',
     #       'Подкатегории: ' + subcategorys_of_podcast + '\n',)
 
-    tags = (categorys_of_podcast, subcategorys_of_podcast, keyword_of_podcasts)
-    print(tags)
+    tags = (subcategorys_of_podcast, keyword_of_podcasts)
+
+    # util.set_new_podcast(title_of_podcast, description_of_podcast, categorys_of_podcast, image_of_podcasts, author_of_podcast, tags)
+
     """
         Далее идем к выпускам подкаста, именуется этот тег в rss как item, и его столько сколько всего выпусков.
         Имеем цикл, который ходит по этим тегам, из каждого тега выкачиваем ввсё что в нём есть.
@@ -157,7 +164,7 @@ def parse(url):
         mp3 = enclosure[: enclosure.find('"')]    # получаем аудио
 
         # получаем дату публикации выпуска
-        pubdata_of_item = item_code[item_code.find('<pubDate>') + 9: item_code.find('</pubDate>')]
+        pubdata_of_item = clear_pubdata(item_code[item_code.find('<pubDate>') + 14: item_code.find('</pubDate>') - 6])
 
         # получаем область с длительностью аудио
         duration_of_item = str()
@@ -166,6 +173,7 @@ def parse(url):
             duration_of_item = temp_code[:temp_code.find('</')]    # получаем длительность аудио
             if duration_of_item and duration_of_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
                 duration_of_item = convert_of_time(int(duration_of_item))
+            duration_of_item = duration_of_item.replace(':', '')
 
         # получаем картинку выпуска если такова есть
         image_of_item = str()
@@ -181,19 +189,19 @@ def parse(url):
         if item_code.find('keywords>') > -1:  # если есть ключевые слова
             keyword_of_item = parse_keywords(item_code[:item_code.find('</item>')])
 
-        tags = (categorys_of_item, subcategorys_of_item, keyword_of_item)
-        print(tags)
+        tags = (subcategorys_of_item, keyword_of_item)
 
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-        # print('Название выпуска: ' + title_of_item + '\n',
-        #       'Описание выпуска: ' + description_of_item + '\n',
-        #       'Музыка: ' + mp3 + '\n',
-        #       'Дата публикации выпуска: ' + pubdata_of_item + '\n',
-        #       'Длительность выпуска: ' + duration_of_item + '\n',
-        #       'Картинка выпуска: ' + image_of_item + '\n',
-        #       'Категории выпуска: ' + categorys_of_item + '\n',
-        #       'Подкатегории выпуска: ' + subcategorys_of_item + '\n',
-        #       'Ключевые слова выпуска: ' + keyword_of_item + '\n',)
+        print('Название выпуска: ' + title_of_item + '\n',
+              'Описание выпуска: ' + description_of_item + '\n',
+              'Музыка: ' + mp3 + '\n',
+              'Дата публикации выпуска: ' + pubdata_of_item + '\n',
+              'Длительность выпуска: ' + duration_of_item + '\n',
+              'Картинка выпуска: ' + image_of_item + '\n',
+              'Категории выпуска: ' + categorys_of_item + '\n',
+              # 'Подкатегории выпуска: ' + subcategorys_of_item + '\n',
+              # 'Ключевые слова выпуска: ' + keyword_of_item + '\n',
+              )
 
 
 if __name__ == '__main__':
@@ -240,6 +248,6 @@ if __name__ == '__main__':
     # parse('https://pinecast.com/feed/designer')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:436210245/sounds.rss')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:602278230/sounds.rss')
-    # parse('https://podster.fm/rss.xml?pid=35648')
-    parse('https://feeds.simplecast.com/v1cJ8X2Z')
+    parse('https://podster.fm/rss.xml?pid=35648')
+    # parse('https://feeds.simplecast.com/v1cJ8X2Z')
     pass
