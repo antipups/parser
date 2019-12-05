@@ -60,7 +60,7 @@ def parse_category(html):   # парсим категории
             categorys += html[: html.find('"')] + ', '
             subcategorys_of_field = html[html.find('>') + 1: html.find('</itunes:category>')]
             while subcategorys_of_field.find('category text="') > -1:
-                subcategorys += '#' + subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.rfind('"')]  + ', '
+                subcategorys += subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.rfind('"')]  + ', '
                 subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('/>') + 2:]
             html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
         else:
@@ -69,7 +69,7 @@ def parse_category(html):   # парсим категории
         categorys = check_on_shit(categorys)
         if subcategorys:
             subcategorys = check_on_shit(subcategorys)
-    return categorys, subcategorys.split(', ')
+    return categorys.split(', '), subcategorys.split(', ')
 
 
 def parse_keywords(html):
@@ -135,9 +135,8 @@ def parse(url):
     #       'Категории: ' + categorys_of_podcast + '\n',
     #       'Подкатегории: ' + subcategorys_of_podcast + '\n',)
 
-    tags = (subcategorys_of_podcast, keyword_of_podcasts)
-
-    # util.set_new_podcast(title_of_podcast, description_of_podcast, categorys_of_podcast, image_of_podcasts, author_of_podcast, tags)
+    # tags = (subcategorys_of_podcast, keyword_of_podcasts)
+    util.set_new_podcast(title_of_podcast, description_of_podcast, categorys_of_podcast, image_of_podcasts, author_of_podcast, subcategorys_of_podcast, keyword_of_podcasts)
 
     """
         Далее идем к выпускам подкаста, именуется этот тег в rss как item, и его столько сколько всего выпусков.
@@ -192,16 +191,16 @@ def parse(url):
         tags = (subcategorys_of_item, keyword_of_item)
 
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-        print('Название выпуска: ' + title_of_item + '\n',
-              'Описание выпуска: ' + description_of_item + '\n',
-              'Музыка: ' + mp3 + '\n',
-              'Дата публикации выпуска: ' + pubdata_of_item + '\n',
-              'Длительность выпуска: ' + duration_of_item + '\n',
-              'Картинка выпуска: ' + image_of_item + '\n',
-              'Категории выпуска: ' + categorys_of_item + '\n',
+        # print('Название выпуска: ' + title_of_item + '\n',
+        #       'Описание выпуска: ' + description_of_item + '\n',
+        #       'Музыка: ' + mp3 + '\n',
+        #       'Дата публикации выпуска: ' + pubdata_of_item + '\n',
+        #       'Длительность выпуска: ' + duration_of_item + '\n',
+        #       'Картинка выпуска: ' + image_of_item + '\n',
+              # 'Категории выпуска: ' + categorys_of_item + '\n',
               # 'Подкатегории выпуска: ' + subcategorys_of_item + '\n',
               # 'Ключевые слова выпуска: ' + keyword_of_item + '\n',
-              )
+              # )
 
 
 if __name__ == '__main__':
@@ -222,7 +221,7 @@ if __name__ == '__main__':
     # parse('https://mojomedia.ru/feed-podcasts/dikie-utki')
     # parse('http://feeds.feedburner.com/DariaSadovaya')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:328939120/sounds.rss')
-    # parse('http://feeds.soundcloud.com/users/soundcloud:users:132344904/sounds.rss')
+    parse('http://feeds.soundcloud.com/users/soundcloud:users:132344904/sounds.rss')
     # parse('http://feeds.feedburner.com/pod24fps')
     # parse('https://anchor.fm/s/6f169f8/podcast/rss')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:679508342/sounds.rss')
@@ -248,6 +247,6 @@ if __name__ == '__main__':
     # parse('https://pinecast.com/feed/designer')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:436210245/sounds.rss')
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:602278230/sounds.rss')
-    parse('https://podster.fm/rss.xml?pid=35648')
+    # parse('https://podster.fm/rss.xml?pid=35648')
     # parse('https://feeds.simplecast.com/v1cJ8X2Z')
     pass
