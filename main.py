@@ -95,11 +95,15 @@ def clear_pubdata(string):
     return string[4:8] + string[2:4] + string[:2] + string[-6:]   # подводим под шаблон бд
 
 
-def word_with_time(string):
+def work_with_time(string):
     string = string.replace(':', '')
     if len(string) == 4 and int(string) > 5959:
-
-
+        time = int(str(string)[:-2]) * 60 + int(string) % 100
+        return ('0' * (2 - len(str(time // 3600))) + str(time // 3600)) + ':' + (
+                       '0' * (2 - len(str(time // 60 % 60))) + str(time // 60 % 60)) + ':' + (
+                              '0' * (2 - len(str(time % 60))) + str(time % 60))
+    else:
+        return string
 
 
 def parse():
@@ -195,6 +199,7 @@ def parse():
                 if duration_of_item and duration_of_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
                     duration_of_item = convert_of_time(int(duration_of_item))
                 duration_of_item = work_with_time(duration_of_item)
+                print(duration_of_item)
 
             # получаем картинку выпуска если такова есть
             image_of_item = str()

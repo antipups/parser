@@ -111,12 +111,28 @@ def set_new_item(title_of_podcast, title_of_audio, description_of_audio, audio, 
                  duration_of_audio, category_of_item, subcategory_of_item, keyword_of_item):
 
     id_of_podcast = execute('SELECT id_of_podcast FROM podcasts WHERE title_of_podcast = %(p)s', title_of_podcast)[0].get('id_of_podcast')
-
-    execute('INSERT INTO items (id_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio, pubdata_of_audio, duration_of_audio)'
-            ' VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', id_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio,
-            pubdata_of_audio, duration_of_audio, commit=True)
-    id_of_item = execute('SELECT id_of_item FROM items WHERE title_of_audio = %(p)s '
-                         'AND id_of_podcast = %(p)s', title_of_audio, id_of_podcast)[0].get('id_of_item')
+    if not duration_of_audio:
+        duration_of_audio = None
+    if not image_of_audio:
+        image_of_audio = None
+    if not pubdata_of_audio:
+        pubdata_of_audio = None
+    # print(duration_of_audio, title_of_audio)
+    # title_of_audio = title_of_audio.encode('utf-8')
+    print(title_of_audio)
+    try:
+        execute('INSERT INTO items (id_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio, pubdata_of_audio, duration_of_audio)'
+                ' VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', id_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio,
+                pubdata_of_audio, duration_of_audio, commit=True)
+    except IndexError:
+        print('Ошибка, не коммитит')
+        return
+    try:
+        id_of_item = execute('SELECT id_of_item FROM items WHERE title_of_audio = %(p)s '
+                             'AND id_of_podcast = %(p)s', title_of_audio, id_of_podcast)[0].get('id_of_item')
+    except IndexError:
+        print('Незакомитило')
+        return
 
     # проходимся по всем категориям, если такой нет записываем в категории, и соединяем с подкастом, иначе просто соединяем с подкастом
     for each_category in category_of_item:
