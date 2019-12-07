@@ -51,7 +51,7 @@ def clear_from_tags(string):
 
 
 def convert_of_time(time):      # конвертация времени из секунд в часы
-    return str(time // 3600) + ':' + str(time // 60 % 60) + ':' + str(time % 60)
+    return ('0' * (2 - len(str(time // 3600))) + str(time // 3600)) + ':' + ('0' * (2 - len(str(time // 60 % 60))) + str(time // 60 % 60)) + ':' + ('0' * (2 - len(str(time % 60))) + str(time % 60))
 
 
 def parse_category(html):   # парсим категории
@@ -95,15 +95,15 @@ def clear_pubdata(string):
     return string[4:8] + string[2:4] + string[:2] + string[-6:]   # подводим под шаблон бд
 
 
-def work_with_time(string):
-    string = string.replace(':', '')
-    if len(string) == 4 and int(string) > 5959:
-        time = int(str(string)[:-2]) * 60 + int(string) % 100
-        return ('0' * (2 - len(str(time // 3600))) + str(time // 3600)) + ':' + (
-                       '0' * (2 - len(str(time // 60 % 60))) + str(time // 60 % 60)) + ':' + (
-                              '0' * (2 - len(str(time % 60))) + str(time % 60))
-    else:
-        return string
+# def work_with_time(string):
+#     string = string.replace(':', '')
+#     if len(string) == 4 and int(string) > 5959:
+#         time = int(str(string)[:-2]) * 60 + int(string) % 100
+#         return ('0' * (2 - len(str(time // 3600))) + str(time // 3600)) + ':' + (
+#                        '0' * (2 - len(str(time // 60 % 60))) + str(time // 60 % 60)) + ':' + (
+#                               '0' * (2 - len(str(time % 60))) + str(time % 60))
+#     else:
+#         return string
 
 
 def parse():
@@ -176,9 +176,12 @@ def parse():
             title_of_item = item_code[item_code.find('<title>') + 7: item_code.find('</title>')]
             title_of_item = check_on_shit(title_of_item)
 
-            # if util.check_item(title_of_item, title_of_podcast):    # если такой выпуск уже есть, выходим
-            #     print('sex')
-            #     return
+            if util.check_item(title_of_item, title_of_podcast):    # если такой выпуск уже есть, выходим
+                print(util.check_item(title_of_item, title_of_podcast))
+                print(title_of_item)
+                print(title_of_podcast)
+                print('sex')
+                break
 
             # получаем описание выпуска
             description_of_item = parse_description(item_code)
@@ -198,7 +201,6 @@ def parse():
                 duration_of_item = temp_code[:temp_code.find('</')]    # получаем длительность аудио
                 if duration_of_item and duration_of_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
                     duration_of_item = convert_of_time(int(duration_of_item))
-                duration_of_item = work_with_time(duration_of_item)
                 print(duration_of_item)
 
             # получаем картинку выпуска если такова есть
