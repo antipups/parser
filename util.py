@@ -101,10 +101,12 @@ def set_new_podcast(url_of_podcast, title_of_podcast, description_of_podcasts, c
                     id_of_new_podcast, id_of_keyword, commit=True)
 
 
-def check_item(title_of_item, title_of_podcast):    # проверка на то , есть ли выпуск или нет
+def check_item(title_of_item, title_of_podcast, audio):    # проверка на то , есть ли выпуск или нет
+    if not execute('SELECT id_of_podcast FROM podcasts WHERE title_of_podcast = %(p)s', title_of_podcast):
+        return False
     id_of_podcast = execute('SELECT id_of_podcast FROM podcasts WHERE title_of_podcast = %(p)s', title_of_podcast)[0].get('id_of_podcast')
     return execute('SELECT title_of_audio FROM items WHERE id_of_podcast = %(p)s AND '
-                   'title_of_audio = %(p)s', id_of_podcast, title_of_item)
+                   'title_of_audio = %(p)s AND audio = %(p)s', id_of_podcast, title_of_item, audio)
 
 
 def set_new_item(title_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio, pubdata_of_audio,
@@ -117,9 +119,6 @@ def set_new_item(title_of_podcast, title_of_audio, description_of_audio, audio, 
         image_of_audio = None
     if not pubdata_of_audio:
         pubdata_of_audio = None
-    # print(duration_of_audio, title_of_audio)
-    # title_of_audio = title_of_audio.encode('utf-8')
-    print(title_of_audio)
     try:
         execute('INSERT INTO items (id_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio, pubdata_of_audio, duration_of_audio)'
                 ' VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', id_of_podcast, title_of_audio, description_of_audio, audio, image_of_audio,
