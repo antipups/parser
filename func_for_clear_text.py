@@ -35,16 +35,33 @@ def clear_from_decor(string):   # чистим от плохой рсслент�
 
 
 def clear_from_tags(string):
-    if string.find('<p>') > -1:
-        string = string.replace('<p>', '')
-        string = string.replace('</p>', '')
+    print('====================================\n')
+    print(string)
+    if string.find('<p') > -1:
+        temp_str = string[string.find('<p'):]
+        string = string.replace(temp_str[:temp_str.find('>') + 1], '')
     if string.find('<br />') > -1:
         string = string.replace('<br />', '')
     if string.find('<a href="') > -1:
-        string = string[:string.find('<a href="')] + string[string.find('">') + 3:] + ' '
+        if string.find('<a href="') == 0:
+            string = string[string.find('">') + 2:] + ' '
+        else:
+            string = string[:string.find('<a href')] + string[string.find('">') + 2:] + ' '
     if string.find('<strong>') > -1:
         string = string.replace('<strong>', '')
-
+    if string.find('<span') > -1:
+        temp_str = string[string.find('<span'):]
+        string = string.replace(temp_str[:temp_str.find('>') + 1], '')
+    if string.find('<ul>') > -1:
+        string = string.replace('<ul>', '\n')
+        string = string.replace('<li>', '\n')
+    if string.find('<ol>') > -1:
+        string = string.replace('<ol>', '\n')
+        string = string.replace('<li>', '\n')
+    if string.find('<u>') > -1:
+        string = string.replace('<u>', '')
+    print(string)
+    print('\n====================================')
     return string
 
 
@@ -79,6 +96,7 @@ def parse_keywords(html):
 
 def parse_description(html):
     temp_code = html[html.find('description>') + 12:]
+    # print(temp_code[: temp_code.find('</')])
     return check_on_shit(temp_code[: temp_code.find('</')])
 
 

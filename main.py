@@ -10,8 +10,8 @@ def pre_parse():
         с url'a инфу.
     """
     for each_podcast in util.check_new_podcast():  # проходимся по ВСЕМ подкастам
-        # threading.Thread(target=parse, args=(each_podcast, )).start()
-        parse(each_podcast)
+        threading.Thread(target=parse, args=(each_podcast, )).start()   # ебашим всё в потоки
+        # parse(each_podcast)   # парсим по одному без потоков
 
 
 def parse(each_podcast):
@@ -27,7 +27,7 @@ def parse(each_podcast):
     title_of_podcast = pre_item_html[pre_item_html.find('<title>') + 7: pre_item_html.find('</title>')]
     title_of_podcast = func_for_clear_text.check_on_shit(title_of_podcast)  # название пригодится при парсинге выпусков
 
-    if each_podcast.get('download') == 1:   # если подкаст не скачан ещё
+    if each_podcast.get('status_of_podcast') == 1:   # если подкаст не скачан ещё
         # находим описание подкаста
         description_of_podcast = None
         if pre_item_html.find('description') > -1:
@@ -92,11 +92,11 @@ def parse(each_podcast):
         mp3 = enclosure[: enclosure.find('"')]  # получаем аудио
 
         if util.check_item(title_of_item, title_of_podcast, mp3):    # если такой выпуск уже есть, выходим
-            print('==========================================')
-            print(util.check_item(title_of_item, title_of_podcast, mp3))
-            print(title_of_item, title_of_podcast, mp3)
-            print('sex')
-            print('==========================================')
+            # print('==========================================')
+            # print(util.check_item(title_of_item, title_of_podcast, mp3))
+            # print(title_of_item, title_of_podcast, mp3)
+            # print('sex')
+            # print('==========================================')
             break
 
         # получаем описание выпуска
