@@ -1,7 +1,7 @@
-import func_for_clear_text
 import threading
 import requests
 import util
+import func_for_clear_text
 
 
 def pre_parse():
@@ -20,59 +20,14 @@ def parse(each_podcast):
         а сразу переходим к выпускам, иначе, качаем и инфу.
 
     """
+
     html = requests.get(each_podcast.get('url_of_podcast')).content.decode('utf-8')     # получаем саму ленту
-    pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
+
+    pre_item_html = html[:html.find('<item>')]  # записываем в ленте часть перед выпусками (для быстрдействия?)
 
     # находим название подкаста
     title_of_podcast = pre_item_html[pre_item_html.find('<title>') + 7: pre_item_html.find('</title>')]
-    title_of_podcast = func_for_clear_text.check_on_shit(title_of_podcast)  # название пригодится при парсинге выпусков
-
-    if each_podcast.get('download') == 1:   # если подкаст не скачан ещё
-        # находим описание подкаста
-        description_of_podcast = None
-        if pre_item_html.find('description') > -1:
-            description_of_podcast = func_for_clear_text.parse_description(pre_item_html)
-
-        # находим картинку подкаста
-        if pre_item_html.find('<image>') > -1:
-            image_of_podcasts = pre_item_html[pre_item_html.find('<image>') + 7: pre_item_html.find('</image>')]
-            image_of_podcasts = image_of_podcasts[image_of_podcasts.find('<url>') + 5: image_of_podcasts.find('</url>')]
-        else:
-            image_of_podcasts = pre_item_html[pre_item_html.find('image') + 5:]
-            image_of_podcasts = image_of_podcasts[image_of_podcasts.find('href="') + 6:]
-            image_of_podcasts = image_of_podcasts[: image_of_podcasts.find('"')]
-
-        # находим ключевые слова если они есть
-        keyword_of_podcasts = str()
-        if pre_item_html.find('keywords>') > -1:     # если есть ключевые слова
-            keyword_of_podcasts = func_for_clear_text.parse_keywords(pre_item_html)
-
-        # находим автора, если он есть
-        author_of_podcast = str()
-        if pre_item_html.find('author>') > -1:
-            temp_code = pre_item_html[pre_item_html.find('author>') + 7:]
-            author_of_podcast = func_for_clear_text.check_on_shit(temp_code[:temp_code.find('</')])
-
-        # находим категории если они есть
-        categorys_of_podcast, subcategorys_of_podcast = func_for_clear_text.parse_category(pre_item_html)
-
-        # print('Название: ' + title_of_podcast + '\n',
-        #       'Описание: ' + description_of_podcast + '\n',
-        #       'Картинка: ' + image_of_podcasts + '\n',
-        #       'Ключевые слова: ' , keyword_of_podcasts , '\n',
-        #       'Автор: ' + author_of_podcast + '\n',
-        #       'Категории: ' , categorys_of_podcast , '\n',
-        #       'Подкатегории: ' , subcategorys_of_podcast , '\n',
-        #       )
-
-        util.set_new_podcast(each_podcast.get('url_of_podcast'), title_of_podcast, description_of_podcast, categorys_of_podcast,
-                             image_of_podcasts, author_of_podcast, subcategorys_of_podcast, keyword_of_podcasts)
-
-    """
-        Далее идем к выпускам подкаста, именуется этот тег(в плане сам выпуск) в rss как item, 
-        и его столько сколько всего выпусков.
-        Имеем цикл, который ходит по этим тегам, из каждого тега выкачиваем ввсё что в нём есть.
-    """
+    title_of_podcast = func_for_clear_text.check_on_shit(title_of_podcast)  # название пригодится при парсинге выпуском
 
     html = html[html.find('<item>'):]   # обрезаем весь html до item
     amount_of_item = 0  # кол-во выпусков, качаем не более 50
@@ -131,7 +86,6 @@ def parse(each_podcast):
         util.set_new_item(title_of_podcast, title_of_item, description_of_item, mp3, image_of_item,
                           pubdata_of_item, duration_of_item, categorys_of_item, subcategorys_of_item, keyword_of_item)
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-
         # print('Название выпуска: ' + title_of_item + '\n',
         #       'Описание выпуска: ' + description_of_item + '\n',
         #       'Музыка: ' + mp3 + '\n',

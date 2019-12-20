@@ -53,11 +53,11 @@ def check_new_podcast():
 
 def set_new_podcast(url_of_podcast, title_of_podcast, description_of_podcasts, category_of_podcast,
                     url_of_image_of_podcast, author_of_podcast, subcat_of_podcast, keyword_of_podcast):
-    execute('UPDATE url_of_podcasts SET download = 0 WHERE url_of_podcast = %(p)s', url_of_podcast, commit=True)    # ставим подкасту 0, что мы его уже скачали
+    execute('UPDATE url_of_podcasts SET status_of_podcast = 2 WHERE url_of_podcast = %(p)s', url_of_podcast, commit=True)    # ставим подкасту 0, что мы его уже скачали
 
     # print(title_of_podcast, description_of_podcasts, url_of_image_of_podcast, author_of_podcast, 1,)
-    execute('INSERT INTO podcasts (title_of_podcast, description_of_podcast, url_of_image_of_podcast, author_of_podcast, status_of_podcast) '  # добавляем новый подкаст
-            'VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', title_of_podcast, description_of_podcasts, url_of_image_of_podcast, author_of_podcast, 1,
+    execute('INSERT INTO podcasts (title_of_podcast, description_of_podcast, url_of_image_of_podcast, author_of_podcast) '  # добавляем новый подкаст
+            'VALUES (%(p)s, %(p)s, %(p)s, %(p)s)', title_of_podcast, description_of_podcasts, url_of_image_of_podcast, author_of_podcast,
             commit=True)
 
     # получаем id нового подкаста для скачки тегов и категорий

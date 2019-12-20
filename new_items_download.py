@@ -1,7 +1,7 @@
-import func_for_clear_text
 import threading
 import requests
 import util
+import func_for_clear_text
 
 
 def pre_parse():
@@ -20,14 +20,15 @@ def parse(each_podcast):
         а сразу переходим к выпускам, иначе, качаем и инфу.
 
     """
+    # html = requests.get(url).content.decode('utf-8')
     html = requests.get(each_podcast.get('url_of_podcast')).content.decode('utf-8')     # получаем саму ленту
-    pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
+    pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстрдействия?)
 
     # находим название подкаста
     title_of_podcast = pre_item_html[pre_item_html.find('<title>') + 7: pre_item_html.find('</title>')]
-    title_of_podcast = func_for_clear_text.check_on_shit(title_of_podcast)  # название пригодится при парсинге выпусков
+    title_of_podcast = func_for_clear_text.check_on_shit(title_of_podcast)  # название пригодится при парсинге выпуском
 
-    if each_podcast.get('download') == 1:   # если подкаст не скачан ещё
+    if each_podcast.get('download') == 1:
         # находим описание подкаста
         description_of_podcast = None
         if pre_item_html.find('description') > -1:
@@ -131,7 +132,6 @@ def parse(each_podcast):
         util.set_new_item(title_of_podcast, title_of_item, description_of_item, mp3, image_of_item,
                           pubdata_of_item, duration_of_item, categorys_of_item, subcategorys_of_item, keyword_of_item)
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-
         # print('Название выпуска: ' + title_of_item + '\n',
         #       'Описание выпуска: ' + description_of_item + '\n',
         #       'Музыка: ' + mp3 + '\n',
