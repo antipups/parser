@@ -97,8 +97,13 @@ def clear_pubdata(string):
 
 
 def pre_parse():
+    """
+        Фукнкция которая парсит все url'ы с бд, и под каждый url выделяет поток, после чего парсит
+        с url'a инфу.
+    """
     for each_podcast in util.check_new_podcast():  # проходимся по ВСЕМ подкастам
-        threading.Thread(target=parse, args=(each_podcast, )).start()
+        # threading.Thread(target=parse, args=(each_podcast, )).start()
+        parse(each_podcast)
 
 
 def parse(each_podcast):
@@ -108,13 +113,14 @@ def parse(each_podcast):
 
     """
     # html = requests.get(url).content.decode('utf-8')
-    html = requests.get(each_podcast.get('url_of_podcast')).content.decode('utf-8')
-    pre_item_html = html[:html.find('<item>')]
+    html = requests.get(each_podcast.get('url_of_podcast')).content.decode('utf-8')     # получаем саму ленту
+    pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстрдействия?)
+
     # находим название подкаста
     title_of_podcast = pre_item_html[pre_item_html.find('<title>') + 7: pre_item_html.find('</title>')]
     title_of_podcast = check_on_shit(title_of_podcast)  # название пригодится при парсинге выпуском
 
-    if each_podcast.get('download') == 1:   # под этим таб
+    if each_podcast.get('download') == 1:
         # находим описание подкаста
         description_of_podcast = None
         if pre_item_html.find('description') > -1:
@@ -162,9 +168,10 @@ def parse(each_podcast):
     """
 
     html = html[html.find('<item>'):]   # обрезаем весь html до item
+    amount_of_item = 0  # кол-во выпусков, качаем не более 50
 
-    while html.find('<item>') > -1:    # до тех пор пока находим новый выпуск
-
+    while html.find('<item>') > -1 and amount_of_item <= 50:    # до тех пор пока находим новый выпуск
+        amount_of_item += 1
         # получаем блок с этим itemом, чтоб работать не по всей странице
         item_code = html[html.find('<item>') + 7: html.find('</item>')]
 
@@ -178,15 +185,17 @@ def parse(each_podcast):
         mp3 = enclosure[: enclosure.find('"')]  # получаем аудио
 
         if util.check_item(title_of_item, title_of_podcast, mp3):    # если такой выпуск уже есть, выходим
-            # print('==========================================')
-            # print(util.check_item(title_of_item, title_of_podcast, mp3))
-            # print(title_of_item, title_of_podcast, mp3)
-            # print('sex')
-            # print('==========================================')
+            print('==========================================')
+            print(util.check_item(title_of_item, title_of_podcast, mp3))
+            print(title_of_item, title_of_podcast, mp3)
+            print('sex')
+            print('==========================================')
             break
 
         # получаем описание выпуска
-        description_of_item = parse_description(item_code)
+        description_of_item = None
+        if item_code.find('description') > -1:
+            description_of_item = parse_description(item_code)
 
         # получаем дату публикации выпуска
         pubdata_of_item = clear_pubdata(item_code[item_code.find('<pubDate>') + 14: item_code.find('</pubDate>') - 6])
@@ -212,7 +221,6 @@ def parse(each_podcast):
         keyword_of_item = str()
         if item_code.find('keywords>') > -1:  # если есть ключевые слова
             keyword_of_item = parse_keywords(item_code[:item_code.find('</item>')])
-
         util.set_new_item(title_of_podcast, title_of_item, description_of_item, mp3, image_of_item,
                           pubdata_of_item, duration_of_item, categorys_of_item, subcategorys_of_item, keyword_of_item)
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
