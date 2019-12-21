@@ -70,8 +70,8 @@ if __name__ == '__main__':
     parse('https://feeds.simplecast.com/v1cJ8X2Z')
 
 
-import requests
-
-
-# url = input("Введите url подкаста на itunes: ")
+# import requests
+#
+#
+# url = 'https://podcasts.apple.com/ru/podcast/driving-sports-tv/id347793733'
 # print(requests.get('http://picklemonkey.net/flipper/extractor.php?feed=' + url).text[12:-2].replace('\/', '/'))

@@ -21,6 +21,11 @@ def parse(each_podcast):
         После благодаря циклу парсим выпуски, если что кол-во выпусков задано на
         81-ой строке.
     """
+    if each_podcast.find('podcasts.apple.com') > -1:    # если ссылка прям с эпл подкастов а не на рсс
+        old_url = each_podcast
+        each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
+                                    + each_podcast).text[12:-2].replace('\/', '/')
+        util.change_of_url(each_podcast, old_url)
     html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
@@ -65,7 +70,7 @@ def parse(each_podcast):
     #       'Подкатегории: ' , subcategorys_of_podcast , '\n',
     #       )
 
-    util.set_new_podcast(each_podcast.get('url_of_podcast'), title_of_podcast, description_of_podcast, categorys_of_podcast,
+    util.set_new_podcast(each_podcast, title_of_podcast, description_of_podcast, categorys_of_podcast,
                          image_of_podcasts, author_of_podcast, subcategorys_of_podcast, keyword_of_podcasts)
 
     """

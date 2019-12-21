@@ -11,8 +11,8 @@ def pre_parse():
     """
     for each_podcast in util.check_new_podcast():  # проходимся по ВСЕМ подкастам
         if each_podcast.get('status_of_podcast') == 2:  # если подкаст нуждается в полной записи
-            # threading.Thread(target=parse, args=(each_podcast.get('url_of_podcast'), )).start()
-            parse(each_podcast.get('url_of_podcast'))
+            threading.Thread(target=parse, args=(each_podcast.get('url_of_podcast'), )).start()
+            # parse(each_podcast.get('url_of_podcast'))
 
 
 def parse(each_podcast):

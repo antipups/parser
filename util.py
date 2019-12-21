@@ -168,7 +168,20 @@ def set_new_item(title_of_podcast, title_of_audio, description_of_audio, audio, 
                     id_of_podcast, id_of_keyword, commit=True)
 
 
-def change_of_status(url_of_podcast, status):   # смена статуса
+def change_of_status(url_of_podcast, status):
+    """
+        Меняем статус подкаста, передаем:
+            1 - если нужна начальная инфа;
+            2 - если нужна полная докачка;
+            3 - если нужна докачкка последних выпусков
+    """
     execute('UPDATE url_of_podcasts SET status_of_podcast = %(p)s WHERE url_of_podcast = %(p)s',
             status,  url_of_podcast, commit=True)
 
+
+def change_of_url(new_url, old_url):
+    """
+        Меняем юрл подкаста, если вдруг он с apple podcast
+    """
+    execute('UPDATE url_of_podcasts SET url_of_podcast = %(p)s WHERE url_of_podcast = %(p)s',
+            new_url, old_url, commit=True)

@@ -60,6 +60,9 @@ def clear_from_tags(string):
         string = string.replace('<li>', '\n')
     if string.find('<u>') > -1:
         string = string.replace('<u>', '')
+    if string.find('<div') > -1:
+        temp_str = string[string.find('<div'):]
+        string = string.replace(temp_str[:temp_str.find('>') + 1], '')
     print(string)
     print('\n====================================')
     return string
