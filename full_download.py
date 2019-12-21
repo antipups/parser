@@ -10,18 +10,14 @@ def pre_parse():
         с url'a инфу.
     """
     for each_podcast in util.check_new_podcast():  # проходимся по ВСЕМ подкастам
-        # threading.Thread(target=parse, args=(each_podcast, )).start()
-        parse(each_podcast)
+        if each_podcast.get('status_of_podcast') == 2:  # если подкаст нуждается в полной записи
+            # threading.Thread(target=parse, args=(each_podcast.get('url_of_podcast'), )).start()
+            parse(each_podcast.get('url_of_podcast'))
 
 
 def parse(each_podcast):
-    """
-            Берем с бд все ссылки на подкасты, проходимся по ним, если у подкаста метка 0, то не качаем его инфу,
-        а сразу переходим к выпускам, иначе, качаем и инфу.
 
-    """
-
-    html = requests.get(each_podcast.get('url_of_podcast')).content.decode('utf-8')     # получаем саму ленту
+    html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
 
     pre_item_html = html[:html.find('<item>')]  # записываем в ленте часть перед выпусками (для быстрдействия?)
 
@@ -30,10 +26,8 @@ def parse(each_podcast):
     title_of_podcast = func_for_clear_text.check_on_shit(title_of_podcast)  # название пригодится при парсинге выпуском
 
     html = html[html.find('<item>'):]   # обрезаем весь html до item
-    amount_of_item = 0  # кол-во выпусков, качаем не более 50
 
-    while html.find('<item>') > -1 and amount_of_item <= 50:    # до тех пор пока находим новый выпуск
-        amount_of_item += 1
+    while html.find('<item>') > -1:    # до тех пор пока находим новый выпуск
         # получаем блок с этим itemом, чтоб работать не по всей странице
         item_code = html[html.find('<item>') + 7: html.find('</item>')]
 
@@ -46,13 +40,9 @@ def parse(each_podcast):
         enclosure = enclosure[enclosure.find('url="') + 5:enclosure.find('/>')]
         mp3 = enclosure[: enclosure.find('"')]  # получаем аудио
 
-        if util.check_item(title_of_item, title_of_podcast, mp3):    # если такой выпуск уже есть, выходим
-            print('==========================================')
-            print(util.check_item(title_of_item, title_of_podcast, mp3))
-            print(title_of_item, title_of_podcast, mp3)
-            print('sex')
-            print('==========================================')
-            break
+        if util.check_item(title_of_item, title_of_podcast, mp3):    # если такой выпуск уже есть, не выходим, а просто его пропускаем
+            html = html[html.find('</item>') + 7:]  # режем ту строку с которой отработали, и идем далее
+            continue
 
         # получаем описание выпуска
         description_of_item = None
@@ -96,6 +86,8 @@ def parse(each_podcast):
         #       'Подкатегории выпуска: ', subcategorys_of_item , '\n',
         #       'Ключевые слова выпуска: ', keyword_of_item , '\n',
         #       )
+
+    util.change_of_status(each_podcast, 3)
 
 
 if __name__ == '__main__':

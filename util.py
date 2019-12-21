@@ -53,7 +53,8 @@ def check_new_podcast():
 
 def set_new_podcast(url_of_podcast, title_of_podcast, description_of_podcasts, category_of_podcast,
                     url_of_image_of_podcast, author_of_podcast, subcat_of_podcast, keyword_of_podcast):
-    execute('UPDATE url_of_podcasts SET status_of_podcast = 2 WHERE url_of_podcast = %(p)s', url_of_podcast, commit=True)    # ставим подкасту 0, что мы его уже скачали
+
+    change_of_status(url_of_podcast, 2)     # меняем статус на статус полной докачки
 
     # print(title_of_podcast, description_of_podcasts, url_of_image_of_podcast, author_of_podcast, 1,)
     execute('INSERT INTO podcasts (title_of_podcast, description_of_podcast, url_of_image_of_podcast, author_of_podcast) '  # добавляем новый подкаст
@@ -166,4 +167,8 @@ def set_new_item(title_of_podcast, title_of_audio, description_of_audio, audio, 
             execute('INSERT INTO podcasts_with_keywords (id_of_podcast, id_of_keyword) VALUES (%(p)s, %(p)s)',
                     id_of_podcast, id_of_keyword, commit=True)
 
+
+def change_of_status(url_of_podcast, status):   # смена статуса
+    execute('UPDATE url_of_podcasts SET status_of_podcast = %(p)s WHERE url_of_podcast = %(p)s',
+            status,  url_of_podcast, commit=True)
 
