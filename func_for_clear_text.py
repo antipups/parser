@@ -35,8 +35,8 @@ def clear_from_decor(string):   # чистим от плохой рсслент�
 
 
 def clear_from_tags(string):
-    print('====================================\n')
-    print(string)
+    # print('====================================\n')
+    # print(string)
     if string.find('<p') > -1:
         temp_str = string[string.find('<p'):]
         string = string.replace(temp_str[:temp_str.find('>') + 1], '')
@@ -63,8 +63,8 @@ def clear_from_tags(string):
     if string.find('<div') > -1:
         temp_str = string[string.find('<div'):]
         string = string.replace(temp_str[:temp_str.find('>') + 1], '')
-    print(string)
-    print('\n====================================')
+    # print(string)
+    # print('\n====================================')
     return string
 
 
