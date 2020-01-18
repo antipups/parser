@@ -68,7 +68,7 @@ def clear_from_tags(string):
     return string
 
 
-def convert_of_time(time):      # конвертация времени из секунд в часы
+def convert_time(time):      # конвертация времени из секунд в часы
     return ('0' * (2 - len(str(time // 3600))) + str(time // 3600)) + ':' + ('0' * (2 - len(str(time // 60 % 60))) + str(time // 60 % 60)) + ':' + ('0' * (2 - len(str(time % 60))) + str(time % 60))
 
 
@@ -78,10 +78,10 @@ def parse_category(html):   # парсим категории
         html = html[html.find('category text="') + 15:]
         if html.find('>') < html.find('/>'):  # если у категории есть подкатегории
             categorys += html[: html.find('"')] + ', '
-            subcategorys_of_field = html[html.find('>') + 1: html.find('</itunes:category>')]
-            while subcategorys_of_field.find('category text="') > -1:
-                subcategorys += subcategorys_of_field[subcategorys_of_field.find('category text="') + 15: subcategorys_of_field.rfind('"')]  + ', '
-                subcategorys_of_field = subcategorys_of_field[subcategorys_of_field.find('/>') + 2:]
+            subcategorys_field = html[html.find('>') + 1: html.find('</itunes:category>')]
+            while subcategorys_field.find('category text="') > -1:
+                subcategorys += subcategorys_field[subcategorys_field.find('category text="') + 15: subcategorys_field.rfind('"')]  + ', '
+                subcategorys_field = subcategorys_field[subcategorys_field.find('/>') + 2:]
             html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
         else:
             categorys += html[: html.find('"')] + ', '
@@ -104,11 +104,11 @@ def parse_description(html):
 
 
 def clear_pubdata(string):
-    dict_of_day = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
+    dict_day = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
                    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
     if string[1] == ' ':    # для нормального времени (2 -> 02)
         string = '0' + string[0] + ' ' + string[2:]
     month = re.search(r'\w\w\w', string)[0]
-    string = re.sub(month, dict_of_day.get(month), string)  # запуливаем вместо названия месяца номер месяца
+    string = re.sub(month, dict_day.get(month), string)  # запуливаем вместо названия месяца номер месяца
     string = re.sub(r'[ :]', '', string)    # вместо пробела и двоиточия ничего, в инт бахаем
     return string[4:8] + string[2:4] + string[:2] + string[-6:]   # подводим под шаблон бд

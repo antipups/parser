@@ -1,13 +1,13 @@
 import util
 
 
-# def parse(url):
-#     util.execute('INSERT INTO url_of_podcasts (url_of_podcast, download) VALUES (%(p)s, %(p)s)', url, 1,
-#                  commit=True)  # ставим подкасту 0, что мы его уже скачали
-
 def parse(url):
-    util.execute('UPDATE url_of_podcasts SET status_of_podcast = 1 WHERE url_of_podcast = %(p)s', url,
+    util.execute('INSERT INTO url_podcasts (url_podcast, status_podcast) VALUES (%(p)s, %(p)s)', url, 1,
                  commit=True)  # ставим подкасту 0, что мы его уже скачали
+
+# def parse(url):
+#     util.execute('UPDATE url_podcasts SET status_podcast = 1 WHERE url_podcast = %(p)s', url,
+#                  commit=True)  # ставим подкасту 0, что мы его уже скачали
 
 
 if __name__ == '__main__':
@@ -15,19 +15,18 @@ if __name__ == '__main__':
     util.execute('TRUNCATE items', commit=True)
     util.execute('TRUNCATE items_with_keywords', commit=True)
     util.execute('TRUNCATE keywords', commit=True)
-    util.execute('TRUNCATE keywords_of_items', commit=True)
+    util.execute('TRUNCATE keywords_items', commit=True)
     util.execute('TRUNCATE podcasts', commit=True)
     util.execute('TRUNCATE podcasts_with_categorys', commit=True)
     util.execute('TRUNCATE podcasts_with_keywords', commit=True)
-    util.execute('TRUNCATE subcat_of_item', commit=True)
-    util.execute('TRUNCATE subcat_of_podcast', commit=True)
-    # util.execute('TRUNCATE url_of_podcasts', commit=True)
+    util.execute('TRUNCATE subcat_item', commit=True)
+    util.execute('TRUNCATE subcat_podcast', commit=True)
+    # util.execute('TRUNCATE url_podcasts', commit=True)
     parse('https://anchor.fm/s/daae468/podcast/rss')
     parse('https://aerostatica.ru/podcast.xml')
     parse('https://feeds.simplecast.com/CPNlXNwD')
     parse('https://rss.simplecast.com/podcasts/4464/rss')
     parse('https://podster.fm/rss.xml?pid=20066')
-    parse('http://feeds.soundcloud.com/users/soundcloud:users:516686697/sounds.rss')
     parse('https://podster.fm/rss.xml?pid=29605')
     parse('https://meduza.io/rss/podcasts/peremotka')
     parse('https://mojomedia.ru/feed-podcasts/rebyata-my-potrahalis')
@@ -68,10 +67,20 @@ if __name__ == '__main__':
     parse('http://feeds.soundcloud.com/users/soundcloud:users:602278230/sounds.rss')
     parse('https://podster.fm/rss.xml?pid=35648')
     parse('https://feeds.simplecast.com/v1cJ8X2Z')
+    parse('vk.com')
+
 
 
 # import requests
 #
 #
 # url = 'https://podcasts.apple.com/ru/podcast/driving-sports-tv/id347793733'
-# print(requests.get('http://picklemonkey.net/flipper/extractor.php?feed=' + url).text[12:-2].replace('\/', '/'))
+# url = 'vk.com'
+# if requests.get('http://picklemonkey.net/flipper/extractor.php?feed=' + url).text[12:-2].replace('\/', '/').startswith('valid URL: '):
+#     print('ссыль хуйня')
+
+# import requests
+
+# sex = requests.get('https://warispeace.podigee.io/feed/mp3').content.decode('utf-8')
+# print(sex)
+# print(sex.find('rss'))
