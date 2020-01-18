@@ -4,7 +4,7 @@ import util
 def parse(url):
     util.execute('INSERT INTO url_podcasts (url_podcast, status_podcast) VALUES (%(p)s, %(p)s)', url, 1,
                  commit=True)  # ставим подкасту 0, что мы его уже скачали
-
+#
 # def parse(url):
 #     util.execute('UPDATE url_podcasts SET status_podcast = 1 WHERE url_podcast = %(p)s', url,
 #                  commit=True)  # ставим подкасту 0, что мы его уже скачали
@@ -21,7 +21,8 @@ if __name__ == '__main__':
     util.execute('TRUNCATE podcasts_with_keywords', commit=True)
     util.execute('TRUNCATE subcat_item', commit=True)
     util.execute('TRUNCATE subcat_podcast', commit=True)
-    # util.execute('TRUNCATE url_podcasts', commit=True)
+    util.execute('TRUNCATE error_links', commit=True)
+    util.execute('TRUNCATE url_podcasts', commit=True)
     parse('https://anchor.fm/s/daae468/podcast/rss')
     parse('https://aerostatica.ru/podcast.xml')
     parse('https://feeds.simplecast.com/CPNlXNwD')

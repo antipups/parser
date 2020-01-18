@@ -11,16 +11,13 @@ def pre_parse():
     """
     for each_podcast in util.check_new_podcast():  # проходимся по ВСЕМ подкастам
         if each_podcast.get('status_podcast') == 1:  # если подкаст не скачан ещё
-            print(each_podcast.get('url_podcast'))
             if not each_podcast.get('url_podcast').startswith('http'):   # если нет http / https - на помойку
-                print('sex')
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
                 continue
             if requests.get(each_podcast.get('url_podcast')).status_code == 404:     # если страницы не существует, кидаем в таблицу с битыми ссылками
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
             else:
-                continue
-                # threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
+                threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
             # parse(each_podcast)   # парсим по одному без потоков
 
 
@@ -38,7 +35,7 @@ def parse(each_podcast):
                                     + each_podcast).text[12:-2].replace('\/', '/')
         util.change_url(each_podcast, old_url)
     html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
-    if html.find('rss') != 39 or html.find('rss') != 40:    # если это не rss лента (у рсс на индексах которые в условии написано рсс) кидаем в таблицу с битыми ссылками
+    if html[:150].find('rss') > 41 or html[:150].find('rss') < 39:    # если это не rss лента (у рсс на индексах которые в условии написано рсс) кидаем в таблицу с битыми ссылками
         util.add_url_in_error_links(each_podcast)
         return
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
