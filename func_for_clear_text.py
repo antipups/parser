@@ -46,34 +46,34 @@ def clear_from_tags(string):
         string = re.sub(r"<(/?li)[\w\s'+''=''\"']*>", '\n', string)
     if string.find('<u>') > -1:
         string = string.replace('<u>', '')
-    if string.find('<a') > -1:
+    while string.find('<a') > -1:
         temp_str = string[string.find('<a'):string.find('</a>') + 4]
-        url = temp_str[temp_str.find('href="') + 6:]
+        url = temp_str[temp_str.find(re.search(r'href=', string, flags=re.IGNORECASE).group()) + 6:]
         url = url[:url.find('"')]   # тупо ссылка которая в href
-        content = temp_str[string.find('>'):string.find('</a>')]    # контент котоорый в теле тега <a>
+        content = temp_str[temp_str.find('>') + 1:temp_str.find('</a>')]    # контент котоорый в теле тега <a>
         if content == url:
-            string = string.replace(temp_str, url)
+            string = string.replace(temp_str, ' ' + url)
         else:
-            string = string.replace(temp_str, url + ' - ' + content)
+            string = string.replace(temp_str, ' ' + url + ' - ' + content)
     if string.find('</a>') > -1:
         string = string.replace('</a>', '')
     if re.search(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", string) is not None:
         string = re.sub(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", '\n', string)
-    if re.search(r"<div[\w\s'+''=''\"']*>", string) is not None:
-        string = re.sub(r"<div[\w\s'+''=''\"']*>[\w\s'+''=''\"']*</div>", '', string)
-    if re.search(r"<img[\w\s'+''=''\"']*/>", string) is not None:
-        string = re.sub(r"<img[\w\s'+''=''\"']*/>", '', string)
+    if string.find('<div') > -1:
+        string = re.sub(r"<div.*</div>", '', string)
+    # if re.search(r"<img[\w\s'+''=''\"']*/>", string) is not None:
+    #     string = re.sub(r"<img[\w\s'+''=''\"']*/>", '', string)
     if re.search(r"<h.>", string) is not None:
         string = re.sub(r"</?h.>", '', string)
     if re.search(r"</?b>", string) is not None:
         string = re.sub(r"</?b>", '', string)
     if re.search(r"<(/?tr|/?td)>", string) is not None:
         string = re.sub(r"<(/?tr|/?td)>", '', string)
-    if re.search(r"</?table[\w\s'+''=''\"']*>", string) is not None:
-        string = re.sub(r"</?table[\w\s'+''=''\"']*>", '', string)
+    if re.search(r"</?table.*>", string) is not None:
+        string = re.sub(r"</?table.*>", '', string)
     if re.search(r"&(nbsp|amp);", string) is not None:
         string = re.sub(r"&(nbsp|amp);", '', string)
-    return string
+    return re.sub(r"\n{3,}", '', string)
 
 
 def convert_time(time):      # конвертация времени из секунд в часы

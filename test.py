@@ -90,6 +90,6 @@ if __name__ == '__main__':
 # import re
 #
 #
-# string = '<span asdasd>Секс</span><span lol="asd">Второй секс</span>'
+# string = '<spAn asdasd>Секс</span><span lol="asd">Второй секс</spAn>'
 # print(string)
-# print(re.findall(r"<?span[\w\s'+''=''\"']*>[\w\s'+''=''\"']*</span>", string))
+# print(re.findall(r"<?span[\w\s'+''=''\"']*>[\w\s'+''=''\"']*</span>", string, flags=re.IGNORECASE))
