@@ -2,12 +2,10 @@ import re
 
 
 def check_on_shit(string):      # чистим полученные строки от говна, типа сидата или спецсимволы хтмл
-    if string.find('&') > -1:
+    if string.find('&#') > -1:
         string = encode_from_html(string)
     if string.find('<![CDATA[') > -1:   # чистим строку от cdata
         string = string[string.find('<![CDATA[') + 9: string.find(']]>')]
-    if string.find('&lt') > -1:
-        string = clear_from_decor(string)
     string = clear_from_tags(string)
     return string
 
@@ -26,23 +24,14 @@ def encode_from_html(string):   # перекодировка из html симв�
     return string
 
 
-def clear_from_decor(string):   # чистим от плохой рссленты (c декором которая)
-    while string.startswith('&lt;'):    # чистим от тега lt(он обычно всё инициирует, таблицы, картинки)
-        string = string[string.find('&gt;') + 4:]
-    while string.find('&lt;') > -1:     # опять таки чистим от него же но уже не в начале текста
-        string = string[:string.find('&lt;')] + '\n' + string[string.find('&gt;') + 4:]
-    return string
-
-
 def clear_from_tags(string):
-    # print('====================================\n')
-    # print(string)
-    if string.find('<p') > -1:
-        temp_str = string[string.find('<p'):]
-        string = string.replace(temp_str[:temp_str.find('>') + 1], '')
-    if string.find('<br />') > -1:
-        string = string.replace('<br />', '')
-    if string.find('<a href="') > -1:
+    if string.find('&lt') > -1:
+        string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
+    if re.search(r"<['/']?p.*>", string) is not None:
+        string = re.sub(r"<['/']?p.*>", '\n', string)
+    if re.search(r"<['/', ' ']{0,2}br['/', ' ']{0,2}>", string) is not None:
+        string = re.sub(r"<['/', ' ']{0,2}br['/', ' ']{0,2}>", '\n', string)
+    while string.find('<a href="') > -1:
         if string.find('<a href="') == 0:
             string = string[string.find('">') + 2:] + ' '
         else:
@@ -60,11 +49,14 @@ def clear_from_tags(string):
         string = string.replace('<li>', '\n')
     if string.find('<u>') > -1:
         string = string.replace('<u>', '')
-    if string.find('<div') > -1:
-        temp_str = string[string.find('<div'):]
-        string = string.replace(temp_str[:temp_str.find('>') + 1], '')
-    # print(string)
-    # print('\n====================================')
+    if string.find('</a>') > -1:
+        string = string.replace('</a>', '')
+    if string.find('<hr>') > -1:
+        string = string.replace('<hr>', '\n\n')
+    if re.search(r"<div.{0,200}>", string) is not None:
+        string = re.sub(r"<div.{0,200}>.{0,200}</div>", '\n', string)
+    if re.search(r"<img.{0,200}/>", string) is not None:
+        string = re.sub(r"<img.{0,200}/>", '\n', string)
     return string
 
 
@@ -99,7 +91,6 @@ def parse_keywords(html):
 
 def parse_description(html):
     temp_code = html[html.find('description>') + 12:]
-    # print(temp_code[: temp_code.find('</')])
     return check_on_shit(temp_code[: temp_code.find('</')])
 
 
