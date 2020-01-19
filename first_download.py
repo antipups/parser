@@ -72,7 +72,7 @@ def parse(each_podcast):
     # находим категории если они есть
     categorys_podcast, subcategorys_podcast = func_for_clear_text.parse_category(pre_item_html)
 
-    print('СССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССылка ', each_podcast)
+    # print('СССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССылка ', each_podcast)
     # print('Название: ' + title_podcast + '\n',
     #       'Описание: ' + description_podcast + '\n',
     #       'Картинка: ' + image_podcasts + '\n',
@@ -140,8 +140,8 @@ def parse(each_podcast):
         util.set_new_item(title_podcast, title_item, description_item, mp3, image_item,
                           pubdata_item, duration_item, categorys_item, subcategorys_item, keyword_item)
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-        print('Название выпуска: ' + title_item + '\n',
-              'Описание выпуска: ' + str(description_item) + '\n',
+        # print('Название выпуска: ' + title_item + '\n',
+        #       'Описание выпуска: ' + str(description_item) + '\n',
               # 'Музыка: ' + mp3 + '\n',
               # 'Дата публикации выпуска: ' + pubdata_item + '\n',
               # 'Длительность выпуска: ' + duration_item + '\n',
@@ -149,7 +149,7 @@ def parse(each_podcast):
               # 'Категории выпуска: ', categorys_item , '\n',
               # 'Подкатегории выпуска: ', subcategorys_item , '\n',
               # 'Ключевые слова выпуска: ', keyword_item , '\n',
-              )
+              # )
 
 
 if __name__ == '__main__':

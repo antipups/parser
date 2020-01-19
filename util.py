@@ -65,6 +65,8 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
     id_new_podcast = execute('SELECT id_podcast FROM podcasts WHERE title_podcast = %(p)s',
                                 title_podcast)[0].get('id_podcast')
 
+    execute('UPDATE url_podcasts SET id = %(p)s WHERE url_podcast = %(p)s', id_new_podcast, url_podcast, commit=True)
+
     # проходимся по всем категориям, если такой нет записываем в категории, и соединяем с подкастом, иначе просто соединяем с подкастом
     for each_category in category_podcast:
         if not each_category:    # после обрезки, последний элемент - всегда пуст

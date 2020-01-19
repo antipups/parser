@@ -76,7 +76,7 @@ def clear_from_tags(string):
         string = re.sub(r"</?em>", '', string, flags=re.IGNORECASE)
     if string.find('<code') > -1:
         string = re.sub(r"</?code>", '', string)
-    return re.sub(r"\n{3,}", '', string)
+    return string
 
 
 def convert_time(time):      # конвертация времени из секунд в часы
