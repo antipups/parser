@@ -141,7 +141,7 @@ def parse(each_podcast):
                           pubdata_item, duration_item, categorys_item, subcategorys_item, keyword_item)
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
         print('Название выпуска: ' + title_item + '\n',
-              # 'Описание выпуска: ' + str(description_item) + '\n',
+              'Описание выпуска: ' + str(description_item) + '\n',
               # 'Музыка: ' + mp3 + '\n',
               # 'Дата публикации выпуска: ' + pubdata_item + '\n',
               # 'Длительность выпуска: ' + duration_item + '\n',

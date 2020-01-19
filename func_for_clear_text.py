@@ -2,6 +2,8 @@ import re
 
 
 def check_on_shit(string):      # чистим полученные строки от говна, типа сидата или спецсимволы хтмл
+    # if string.find(' Где тут у вас туалет?') > -1:
+    #     input()
     if string.find('&#') > -1:
         string = encode_from_html(string)
     if string.find('<![CDATA[') > -1:   # чистим строку от cdata
@@ -25,10 +27,10 @@ def encode_from_html(string):   # перекодировка из html симв�
 
 
 def clear_from_tags(string):
-    if string.find('&lt') > -1:
+    if re.search(r'&lt;|&gt;|quot;', string):
         string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
-    if re.search(r"<['/']?p.*>", string) is not None:
-        string = re.sub(r"<['/']?p.*>", '\n', string)
+    if re.search(r"</?p.*>", string) is not None:
+        string = re.sub(r"</?p.*>", '\n', string)
     if re.search(r"<['/', ' ']{0,2}br['/', ' ']{0,2}>", string) is not None:
         string = re.sub(r"<['/', ' ']{0,2}br['/', ' ']{0,2}>", '\n', string)
     while string.find('<a href="') > -1:
@@ -42,21 +44,28 @@ def clear_from_tags(string):
         temp_str = string[string.find('<span'):]
         string = string.replace(temp_str[:temp_str.find('>') + 1], '')
     if string.find('<ul>') > -1:
-        string = string.replace('<ul>', '\n')
-        string = string.replace('<li>', '\n')
+        string = re.sub(r"<(/?ul|/?li)>", '\n', string)
     if string.find('<ol>') > -1:
-        string = string.replace('<ol>', '\n')
-        string = string.replace('<li>', '\n')
+        string = re.sub(r"<(/?ol|/?li)>", '\n', string)
     if string.find('<u>') > -1:
         string = string.replace('<u>', '')
     if string.find('</a>') > -1:
         string = string.replace('</a>', '')
-    if string.find('<hr>') > -1:
-        string = string.replace('<hr>', '\n\n')
+    if re.search(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", string) is not None:
+        string = re.sub(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", '\n', string)
     if re.search(r"<div.{0,200}>", string) is not None:
-        string = re.sub(r"<div.{0,200}>.{0,200}</div>", '\n', string)
+        string = re.sub(r"<div.{0,200}>.{0,200}</div>", '', string)
     if re.search(r"<img.{0,200}/>", string) is not None:
-        string = re.sub(r"<img.{0,200}/>", '\n', string)
+        string = re.sub(r"<img.{0,200}/>", '', string)
+    if re.search(r"<h.>", string) is not None:
+        string = re.sub(r"</?h.>", '', string)
+    if re.search(r"</?b>", string) is not None:
+        string = re.sub(r"</?b>", '', string)
+    if re.search(r"<(/?tr|/?td)>", string) is not None:
+        string = re.sub(r"<(/?tr|/?td)>", '', string)
+    if re.search(r"</?table.{0,200}>", string) is not None:
+        string = re.sub(r"</?table.{0,200}>", '', string)
+    # if re.search()
     return string
 
 
