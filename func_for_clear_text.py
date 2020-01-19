@@ -25,8 +25,6 @@ def encode_from_html(string):   # перекодировка из html симв�
 
 
 def clear_from_tags(string):
-    if string.find('9 марта 2016') > -1:
-        print('lol')
     if re.search(r'&lt;|&gt;|quot;', string):
         string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
     if re.search(r"</?p[^</]*>", string) is not None:
@@ -37,6 +35,8 @@ def clear_from_tags(string):
         string = string.replace('<strong>', '').replace('</strong>', '')
     while string.find('<a') > -1:
         temp_str = string[string.find('<a'):string.find('</a>') + 4]
+        if len(temp_str) < 2:   # кастыль, ну а что сделаешь
+            break
         url = temp_str[temp_str.find(re.search(r'href\s?=\s?"', string, flags=re.IGNORECASE).group()) + len(re.search(r'href\s?=\s?"', string, flags=re.IGNORECASE).group()):]
         url = url[:url.find('"')]   # тупо ссылка которая в href
         content = temp_str[temp_str.find('>') + 1:temp_str.find('</a>')]    # контент котоорый в теле тега <a>

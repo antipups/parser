@@ -94,7 +94,7 @@ def parse(each_podcast):
     html = html[html.find('<item>'):]   # обрезаем весь html до item
     amount_item = 0  # кол-во выпусков, качаем не более 50
 
-    while html.find('<item>') > -1 and amount_item <= 50:    # до тех пор пока находим новый выпуск
+    while html.find('<item>') > -1 and amount_item < 50:    # до тех пор пока находим новый выпуск
         amount_item += 1
         # получаем блок с этим itemом, чтоб работать не по всей странице
         item_code = html[html.find('<item>') + 7: html.find('</item>')]
