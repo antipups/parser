@@ -2,8 +2,6 @@ import re
 
 
 def check_on_shit(string):      # чистим полученные строки от говна, типа сидата или спецсимволы хтмл
-    # if string.find(' Где тут у вас туалет?') > -1:
-    #     input()
     if string.find('&#') > -1:
         string = encode_from_html(string)
     if string.find('<![CDATA[') > -1:   # чистим строку от cdata
@@ -29,43 +27,52 @@ def encode_from_html(string):   # перекодировка из html симв�
 def clear_from_tags(string):
     if re.search(r'&lt;|&gt;|quot;', string):
         string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
-    if re.search(r"</?p.*>", string) is not None:
-        string = re.sub(r"</?p.*>", '\n', string)
+    if re.search(r"</?p[\w\s'+''=''\"']*>", string) is not None:
+        string = re.sub(r"</?p[\w\s'+''=''\"']*>", '\n', string)
     if re.search(r"<['/', ' ']{0,2}br['/', ' ']{0,2}>", string) is not None:
         string = re.sub(r"<['/', ' ']{0,2}br['/', ' ']{0,2}>", '\n', string)
-    while string.find('<a href="') > -1:
-        if string.find('<a href="') == 0:
-            string = string[string.find('">') + 2:] + ' '
-        else:
-            string = string[:string.find('<a href')] + string[string.find('">') + 2:] + ' '
     if string.find('<strong>') > -1:
-        string = string.replace('<strong>', '')
-    if string.find('<span') > -1:
-        temp_str = string[string.find('<span'):]
-        string = string.replace(temp_str[:temp_str.find('>') + 1], '')
+        string = string.replace('<strong>', '').replace('</strong>', '')
+    if re.search(r"</?span[\w\s'+''=''\"']*>", string) is not None:
+        for i in re.findall(r"<?span[\w\s'+''=''\"']*>[\w\s'+''=''\"']*</span>", string):
+            temp_str = i[i.find('>') + 1:]
+            temp_str = temp_str[:temp_str.find('<')]
+            string = string.replace(i, temp_str)
     if string.find('<ul>') > -1:
-        string = re.sub(r"<(/?ul|/?li)>", '\n', string)
+        string = re.sub(r"<(/?ul)>", '', string)
     if string.find('<ol>') > -1:
-        string = re.sub(r"<(/?ol|/?li)>", '\n', string)
+        string = re.sub(r"<(/?ol)>", '', string)
+    if string.find('<li>') > -1:
+        string = re.sub(r"<(/?li)[\w\s'+''=''\"']*>", '\n', string)
     if string.find('<u>') > -1:
         string = string.replace('<u>', '')
+    if string.find('<a') > -1:
+        temp_str = string[string.find('<a'):string.find('</a>') + 4]
+        url = temp_str[temp_str.find('href="') + 6:]
+        url = url[:url.find('"')]   # тупо ссылка которая в href
+        content = temp_str[string.find('>'):string.find('</a>')]    # контент котоорый в теле тега <a>
+        if content == url:
+            string = string.replace(temp_str, url)
+        else:
+            string = string.replace(temp_str, url + ' - ' + content)
     if string.find('</a>') > -1:
         string = string.replace('</a>', '')
     if re.search(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", string) is not None:
         string = re.sub(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", '\n', string)
-    if re.search(r"<div.{0,200}>", string) is not None:
-        string = re.sub(r"<div.{0,200}>.{0,200}</div>", '', string)
-    if re.search(r"<img.{0,200}/>", string) is not None:
-        string = re.sub(r"<img.{0,200}/>", '', string)
+    if re.search(r"<div[\w\s'+''=''\"']*>", string) is not None:
+        string = re.sub(r"<div[\w\s'+''=''\"']*>[\w\s'+''=''\"']*</div>", '', string)
+    if re.search(r"<img[\w\s'+''=''\"']*/>", string) is not None:
+        string = re.sub(r"<img[\w\s'+''=''\"']*/>", '', string)
     if re.search(r"<h.>", string) is not None:
         string = re.sub(r"</?h.>", '', string)
     if re.search(r"</?b>", string) is not None:
         string = re.sub(r"</?b>", '', string)
     if re.search(r"<(/?tr|/?td)>", string) is not None:
         string = re.sub(r"<(/?tr|/?td)>", '', string)
-    if re.search(r"</?table.{0,200}>", string) is not None:
-        string = re.sub(r"</?table.{0,200}>", '', string)
-    # if re.search()
+    if re.search(r"</?table[\w\s'+''=''\"']*>", string) is not None:
+        string = re.sub(r"</?table[\w\s'+''=''\"']*>", '', string)
+    if re.search(r"&(nbsp|amp);", string) is not None:
+        string = re.sub(r"&(nbsp|amp);", '', string)
     return string
 
 
@@ -100,7 +107,7 @@ def parse_keywords(html):
 
 def parse_description(html):
     temp_code = html[html.find('description>') + 12:]
-    return check_on_shit(temp_code[: temp_code.find('</')])
+    return check_on_shit(temp_code[:temp_code.find(re.search(r"</(desc|itun)", temp_code).group())])
 
 
 def clear_pubdata(string):
