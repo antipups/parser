@@ -10,8 +10,8 @@ def pre_parse():
         с url'a инфу.
     """
     for each_podcast in util.check_new_podcast():  # проходимся по ВСЕМ подкастам
-        # threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()
-        parse(each_podcast.get('url_podcast'))
+        threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()
+        # parse(each_podcast.get('url_podcast'))
 
 
 def parse(each_podcast):
