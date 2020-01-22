@@ -56,16 +56,14 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
 
     change_status(url_podcast, 2)     # меняем статус на статус полной докачки
 
-    # print(title_of_podcast, description_of_podcasts, url_of_image_of_podcast, author_of_podcast, 1,)
-    execute('INSERT INTO podcasts (title_podcast, description_podcast, url_image_podcast, author_podcast) '  # добавляем новый подкаст
-            'VALUES (%(p)s, %(p)s, %(p)s, %(p)s)', title_podcast, description_podcasts, url_image_podcast, author_podcast,
-            commit=True)
-
     # получаем id нового подкаста для скачки тегов и категорий
-    id_new_podcast = execute('SELECT id_podcast FROM podcasts WHERE title_podcast = %(p)s',
-                                title_podcast)[0].get('id_podcast')
+    id_new_podcast = execute('SELECT id FROM url_podcasts WHERE url_podcast = %(p)s',
+                             url_podcast)[0].get('id')
 
-    execute('UPDATE url_podcasts SET id = %(p)s WHERE url_podcast = %(p)s', id_new_podcast, url_podcast, commit=True)
+    # print(title_of_podcast, description_of_podcasts, url_of_image_of_podcast, author_of_podcast, 1,)
+    execute('INSERT INTO podcasts (title_podcast, description_podcast, url_image_podcast, author_podcast, id_podcast) '  # добавляем новый подкаст
+            'VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', title_podcast, description_podcasts, url_image_podcast, author_podcast, id_new_podcast,
+            commit=True)
 
     # проходимся по всем категориям, если такой нет записываем в категории, и соединяем с подкастом, иначе просто соединяем с подкастом
     for each_category in category_podcast:
@@ -81,6 +79,7 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
         else:
             id_category = execute('SELECT id_category FROM categorys WHERE title_category = %(p)s',
                                      each_category)[0].get('id_category')
+
             execute('INSERT INTO podcasts_with_categorys(id_category, id_podcast) VALUES (%(p)s, %(p)s)',
                     id_category, id_new_podcast, commit=True)
 
