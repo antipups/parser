@@ -12,15 +12,15 @@ def check_on_shit(string):      # чистим полученные строки
 
 def encode_from_html(string):   # перекодировка из html символов в обычные
     while re.search(r'&#\d{1,4};', string) is not None:     # чистим от цифр, заменяя буквами если вохможно (&#1044;)
-        swap_word = re.search(r'&#\d{1,4};', string)[0]    # копируем изменяемое слово
+        swap_word = re.search(r'&#\d{1,4};', string).group()    # копируем изменяемое слово
         if len(swap_word) != 7 or not 1040 <= int(swap_word[-5:-1]) <= 1103:  # все слова которые не буквы, меняем на пробел
             new_word = ' '
         else:
-            new_word = chr(int(re.search(swap_word, string)[0][-5:-1]))
+            new_word = chr(int(re.search(swap_word, string).group()[-5:-1]))
         string = re.sub(swap_word, new_word, string)
 
     while re.search(r'&\w{1,8};', string) is not None:  # чистим от кода на буквах (&amp;)
-        string = re.sub(re.search(r'&\w{1,8};', string)[0], '', string)
+        string = re.sub(re.search(r'&\w{1,8};', string).group(), '', string)
     return string
 
 
@@ -118,7 +118,7 @@ def clear_pubdata(string):
                    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
     if string[1] == ' ':    # для нормального времени (2 -> 02)
         string = '0' + string[0] + ' ' + string[2:]
-    month = re.search(r'\w\w\w', string)[0]
+    month = re.search(r'\w\w\w', string).group()
     string = re.sub(month, dict_day.get(month), string)  # запуливаем вместо названия месяца номер месяца
     string = re.sub(r'[ :]', '', string)    # вместо пробела и двоиточия ничего, в инт бахаем
     return string[4:8] + string[2:4] + string[:2] + string[-6:]   # подводим под шаблон бд
