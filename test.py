@@ -69,27 +69,35 @@ if __name__ == '__main__':
     parse('https://podster.fm/rss.xml?pid=35648')
     parse('https://feeds.simplecast.com/v1cJ8X2Z')
     parse('vk.com')
-
+#
+#
+#
+# # import requests
+# # #
+# # #
+# # # url = 'https://podcasts.apple.com/ru/podcast/driving-sports-tv/id347793733'
+# # # url = 'vk.com'
+# # # if requests.get('http://picklemonkey.net/flipper/extractor.php?feed=' + url).text[12:-2].replace('\/', '/').startswith('valid URL: '):
+# # #     print('ссыль хуйня')
+# #
+# # # import requests
+# #
+# # # sex = requests.get('https://warispeace.podigee.io/feed/mp3').content.decode('utf-8')
+# # # print(sex)
+# # # print(sex.find('rss'))
+#
+#
+# # import re
+# #
+# #
+# # string = '<spAn asdasd>Секс</span><span lol="asd">Второй секс</spAn>'
+# # print(string)
+# # print(re.findall(r"<?span[\w\s'+''=''\"']*>[\w\s'+''=''\"']*</span>", string, flags=re.IGNORECASE))
 
 
 # import requests
-# #
-# #
-# # url = 'https://podcasts.apple.com/ru/podcast/driving-sports-tv/id347793733'
-# # url = 'vk.com'
-# # if requests.get('http://picklemonkey.net/flipper/extractor.php?feed=' + url).text[12:-2].replace('\/', '/').startswith('valid URL: '):
-# #     print('ссыль хуйня')
 #
-# # import requests
-#
-# # sex = requests.get('https://warispeace.podigee.io/feed/mp3').content.decode('utf-8')
-# # print(sex)
-# # print(sex.find('rss'))
-
-
-# import re
-#
-#
-# string = '<spAn asdasd>Секс</span><span lol="asd">Второй секс</spAn>'
-# print(string)
-# print(re.findall(r"<?span[\w\s'+''=''\"']*>[\w\s'+''=''\"']*</span>", string, flags=re.IGNORECASE))
+# try:
+#     print(requests.get('https://pogovorim.stellav.ru/feed/podcast/').status_code)
+# except requests.exceptions.ConnectionError:
+#     print('error')

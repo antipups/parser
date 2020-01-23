@@ -14,11 +14,14 @@ def pre_parse():
             if not each_podcast.get('url_podcast').startswith('http'):   # если нет http / https - на помойку
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
                 continue
-            if requests.get(each_podcast.get('url_podcast')).status_code == 404:     # если страницы не существует, кидаем в таблицу с битыми ссылками
+            try:
+                if requests.get(each_podcast.get('url_podcast')).status_code == 404:     # если страницы не существует, кидаем в таблицу с битыми ссылками
+                    util.add_url_in_error_links(each_podcast.get('url_podcast'))
+                else:
+                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
+                    # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
+            except requests.exceptions.ConnectionError:
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
-            else:
-                threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
-                # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
 
 
 def parse(each_podcast):
