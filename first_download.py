@@ -20,9 +20,9 @@ def pre_parse():
                 if requests.get(each_podcast.get('url_podcast')).status_code == 404:     # если страницы не существует, кидаем в таблицу с битыми ссылками
                     util.add_url_in_error_links(each_podcast.get('url_podcast'))
                 else:
-                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
+                    # threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
                     print(each_podcast.get('url_podcast'))
-                    # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
+                    parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
             except requests.exceptions.ConnectionError:
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
 

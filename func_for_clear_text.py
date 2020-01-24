@@ -37,45 +37,50 @@ def clear_from_tags(string):
         temp_str = string[string.find('<a'):string.find('</a>') + 4]
         if len(temp_str) < 2:   # кастыль, ну а что сделаешь
             break
-        url = temp_str[temp_str.find(re.search(r'href\s?=\s?"', string, flags=re.IGNORECASE).group()) + len(re.search(r'href\s?=\s?"', string, flags=re.IGNORECASE).group()):]
-        url = url[:url.find('"')]   # тупо ссылка которая в href
+        url = None
+        if temp_str.find('href') > -1 or temp_str.find('HREF') > -1:
+            url = temp_str[temp_str.find(re.search(r'href\s?=\s?"', string, flags=re.IGNORECASE).group()) + len(re.search(r'href\s?=\s?"', string, flags=re.IGNORECASE).group()):]
+            url = url[:url.find('"')]   # тупо ссылка которая в href
         content = temp_str[temp_str.find('>') + 1:temp_str.find('</a>')]    # контент котоорый в теле тега <a>
         if content == url:
             string = string.replace(temp_str, ' ' + url)
         else:
-            string = string.replace(temp_str, ' ' + url + ' - ' + content)
+            if url is not None:
+                string = string.replace(temp_str, ' ' + url + ' - ' + content)
+            else:
+                string = string.replace(temp_str, content)
     if re.search(r"<span[^</]*>", string) is not None:
         for i in re.findall(r"</?span[^</]*>", string):
-            # print(i)
             string = string.replace(i, ' ')
     if string.find('<ul>') > -1:
         string = re.sub(r"<(/?ul)>", '', string)
     if string.find('<ol>') > -1:
         string = re.sub(r"<(/?ol)>", '', string)
-    if re.search(r"</?li.*>", string) is not None:
-        string = re.sub(r"</?li.*>", '\n', string)
+    if re.search(r"</?li[^>]*>", string) is not None:
+        string = re.sub(r"</?li[^>]*>", '\n', string)
     if string.find('<u>') > -1:
         string = re.sub(r"</?u>", '', string)
     if re.search(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", string) is not None:
         string = re.sub(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", '\n', string)
     if string.find('<div') > -1:
-        string = re.sub(r"<div.*</div>", '', string)
-    if re.search(r"<img.*/>", string) is not None:
-        string = re.sub(r"<img.*/>", '', string)
-    if re.search(r"<h.>", string) is not None:
-        string = re.sub(r"</?h.>", '', string)
+        string = re.sub(r"<div[^>]*</div>", '', string)
+    if re.search(r"<img[^>]*/>", string) is not None:
+        string = re.sub(r"<img[^>]*/>", '', string)
+    if re.search(r"<h[^>]>", string) is not None:
+        string = re.sub(r"</?h[^>]>", '', string)
     if re.search(r"</?b>", string) is not None:
         string = re.sub(r"</?b>", '', string)
     if re.search(r"<(/?tr|/?td)>", string) is not None:
         string = re.sub(r"<(/?tr|/?td)>", '', string)
-    if re.search(r"</?table.*>", string) is not None:
-        string = re.sub(r"</?table.*>", '', string)
+    if re.search(r"</?table[^>]*>", string) is not None:
+        string = re.sub(r"</?table[^>]*>", '', string)
     if re.search(r"&(nbsp|amp);", string) is not None:
         string = re.sub(r"&(nbsp|amp);", '', string)
     if string.find('<em') > -1:
         string = re.sub(r"</?em>", '', string, flags=re.IGNORECASE)
     if string.find('<code') > -1:
         string = re.sub(r"</?code>", '', string)
+    print(string)
     return string
 
 
