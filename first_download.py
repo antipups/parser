@@ -32,7 +32,7 @@ def parse(each_podcast):
             После завершения парсинга первых n выпусков, даем подкасту статус 2, который
         оповещает о том, что данный подккаст требует дозагрузки ВСЕХ подкастов.
     """
-    if each_podcast.find('podcasts.apple.com') > -1:    # если ссылка прям с эпл подкастов а не на рсс
+    if each_podcast.find('podcasts.apple.com') > -1 or each_podcast.find('itunes.apple.com') > -1:    # если ссылка прям с эпл подкастов а не на рсс
         old_url = each_podcast
         each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
                                     + each_podcast).text[12:-2].replace('\/', '/')
