@@ -1,5 +1,3 @@
-import time
-
 import func_for_clear_text
 import threading
 import requests
@@ -21,8 +19,8 @@ def pre_parse():
                     util.add_url_in_error_links(each_podcast.get('url_podcast'))
                 else:
                     print(each_podcast.get('url_podcast'))
-                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
-                    # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
+                    # threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
+                    parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
             except requests.exceptions.ConnectionError:
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
 
@@ -35,7 +33,7 @@ def parse(each_podcast):
             После завершения парсинга первых n выпусков, даем подкасту статус 2, который
         оповещает о том, что данный подккаст требует дозагрузки ВСЕХ подкастов.
     """
-    if each_podcast.find('podcasts.apple.com') > -1 or each_podcast.find('itunes.apple.com') > -1:    # если ссылка прям с эпл подкастов а не на рсс
+    if each_podcast.find('apple') > -1 or each_podcast.find('itunes') > -1:    # если ссылка прям с эпл подкастов а не на рсс
         old_url = each_podcast
         each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
                                     + each_podcast).text[12:-2].replace('\/', '/')

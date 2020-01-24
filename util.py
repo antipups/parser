@@ -156,7 +156,7 @@ def set_new_item(title_podcast, title_audio, description_audio, audio, image_aud
         if not each_category:    # после обрезки, последний элемент - всегда пуст
             break
         else:
-            execute('INSERT INTO cat_item(id_item, category) '
+            execute('INSERT INTO cat_item(id_item, title_category) '
                     'VALUES (%(p)s, %(p)s)', id_item, each_category,
                     commit=True)  # привязываем подкаст к этой категории
 

@@ -90,6 +90,8 @@ def convert_time(time):      # конвертация времени из сек
 def parse_category(html):   # парсим категории
     categorys, subcategorys = str(), str()
     while html.find('category ') > -1:  # считываем все категории
+        if html.find('category text="') == -1:
+            break
         html = html[html.find('category text="') + 15:]
         if html.find('>') < html.find('/>'):  # если у категории есть подкатегории
             categorys += html[: html.find('"')] + ', '
@@ -113,6 +115,8 @@ def parse_keywords(html):
 
 
 def parse_description(html):
+    if html.find('description>') == -1:
+        return None
     temp_code = html[html.find('description>') + 12:]
     return check_on_shit(temp_code[:temp_code.find(re.search(r"</(desc|itun)", temp_code).group())])
 

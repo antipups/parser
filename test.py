@@ -22,11 +22,13 @@ if __name__ == '__main__':
     util.execute('TRUNCATE subcat_item', commit=True)
     util.execute('TRUNCATE subcat_podcast', commit=True)
     util.execute('TRUNCATE error_links', commit=True)
+    util.execute('TRUNCATE cat_item', commit=True)
     util.execute('TRUNCATE url_podcasts', commit=True)
-    with open('parse_link.txt', 'r') as f:
-        for i in enumerate(f.readlines()):
-            if i[0] == 195:
-                parse(i[1])
+    # with open('parse_link.txt', 'r') as f:
+    #     for i in enumerate(f.readlines()):
+    #         if 200 < i[0] < 300:
+    #             parse(i[1])
+    parse('https://itunes.apple.com/podcast/%D1%81%D0%B5%D0%B9%D1%87%D0%B0%D1%81-%D1%80%D0%B0%D1%81%D1%81%D0%BA%D0%B0%D0%B6%D0%B5%D0%BC/id1431713559?mt=2')
     # parse('https://podcasts.apple.com/podcast/id1470221669?mt=2')
     # parse('https://anchor.fm/s/daae468/podcast/rss')
     # parse('https://aerostatica.ru/podcast.xml')
