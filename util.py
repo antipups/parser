@@ -199,8 +199,11 @@ def change_url(new_url, old_url):
     """
         Меняем юрл подкаста, если вдруг он с apple podcast
     """
-    execute('UPDATE url_podcasts SET url_podcast = %(p)s WHERE url_podcast = %(p)s',
-            new_url, old_url, commit=True)
+    if not execute('SELECT * FROM url_podcasts WHERE url_podcast = %(p)s', new_url):
+        execute('UPDATE url_podcasts SET url_podcast = %(p)s WHERE url_podcast = %(p)s',
+                new_url, old_url, commit=True)
+    else:
+        execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', old_url, commit=True)
 
 
 def add_url_in_error_links(url):

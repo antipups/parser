@@ -77,5 +77,7 @@
 
 import requests
 
-
-print(requests.get('https://www.12or19.com/podcast?format=rss'))
+html = requests.get('https://www.12or19.com/podcast?format=rss')
+print(html.text)
+print('==========================================')
+print(html.text.find('rss'))
