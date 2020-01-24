@@ -1,3 +1,5 @@
+import time
+
 import func_for_clear_text
 import threading
 import requests
@@ -19,6 +21,7 @@ def pre_parse():
                     util.add_url_in_error_links(each_podcast.get('url_podcast'))
                 else:
                     threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
+                    print(each_podcast.get('url_podcast'))
                     # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
             except requests.exceptions.ConnectionError:
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
@@ -37,7 +40,11 @@ def parse(each_podcast):
         each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
                                     + each_podcast).text[12:-2].replace('\/', '/')
         util.change_url(each_podcast, old_url)
-    html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
+    try:
+        html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
+    except UnicodeDecodeError:
+        html = requests.get(each_podcast).text
+
     if html.find('rss') == -1:    # если это не rss лента (у рсс на индексах которые в условии написано рсс) кидаем в таблицу с битыми ссылками
         util.add_url_in_error_links(each_podcast)
         return

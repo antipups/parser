@@ -25,7 +25,7 @@ if __name__ == '__main__':
     util.execute('TRUNCATE url_podcasts', commit=True)
     with open('parse_link.txt', 'r') as f:
         for i in enumerate(f.readlines()):
-            if i[0] < 100:
+            if i[0] == 93:
                 parse(i[1])
     # parse('https://podcasts.apple.com/podcast/id1470221669?mt=2')
     # parse('https://anchor.fm/s/daae468/podcast/rss')
@@ -74,11 +74,3 @@ if __name__ == '__main__':
     # parse('https://podster.fm/rss.xml?pid=35648')
     # parse('https://feeds.simplecast.com/v1cJ8X2Z')
     # parse('vk.com')
-
-
-# import requests
-#
-# html = requests.get('https://www.12or19.com/podcast?format=rss')
-# print(html.text)
-# print('==========================================')
-# print(html.text.find('rss'))
