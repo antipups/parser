@@ -80,7 +80,6 @@ def clear_from_tags(string):
         string = re.sub(r"</?em>", '', string, flags=re.IGNORECASE)
     if string.find('<code') > -1:
         string = re.sub(r"</?code>", '', string)
-    print(string)
     return string
 
 
@@ -124,6 +123,8 @@ def clear_pubdata(string):
     if string[1] == ' ':    # для нормального времени (2 -> 02)
         string = '0' + string[0] + ' ' + string[2:]
     month = re.search(r'\w\w\w', string).group()
+    if dict_day.get(month) is None:
+        return None
     string = re.sub(month, dict_day.get(month), string)  # запуливаем вместо названия месяца номер месяца
     string = re.sub(r'[ :]', '', string)    # вместо пробела и двоиточия ничего, в инт бахаем
     return string[4:8] + string[2:4] + string[:2] + string[-6:]   # подводим под шаблон бд
