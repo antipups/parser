@@ -20,7 +20,16 @@ def parse(each_podcast):
         а сразу переходим к выпускам, качаем до тех пор, пока не найдем скаченный выпуск.
     """
 
-    html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
+    try:
+        html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
+    except UnicodeDecodeError:
+        html = requests.get(each_podcast).text
+
+    if html.find(
+            'rss') == -1:  # если это не rss лента (у рсс на индексах которые в условии написано рсс) кидаем в таблицу с битыми ссылками
+        util.add_url_in_error_links(each_podcast)
+        return
+
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстрдействия?)
 
     # находим название подкаста
