@@ -52,32 +52,32 @@ def clear_from_tags(string):
     if re.search(r"<span[^</]*>", string) is not None:
         for i in re.findall(r"</?span[^</]*>", string):
             string = string.replace(i, ' ')
-    if string.find('<ul>') > -1:
-        string = re.sub(r"<(/?ul)>", '', string)
-    if string.find('<ol>') > -1:
-        string = re.sub(r"<(/?ol)>", '', string)
+    if string.find('<ul') > -1:
+        string = re.sub(r"</?ul[^>]*>", '', string)
+    if string.find('<ol') > -1:
+        string = re.sub(r"</?ol[^>]*>", '', string)
     if re.search(r"</?li[^>]*>", string) is not None:
         string = re.sub(r"</?li[^>]*>", '\n', string)
-    if string.find('<u>') > -1:
-        string = re.sub(r"</?u>", '', string)
-    if re.search(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", string) is not None:
-        string = re.sub(r"<['/', ' ']{0,2}hr['/', ' ']{0,2}>", '\n', string)
+    if string.find('<u') > -1:
+        string = re.sub(r"</?u[^>]*>", '', string)
+    if re.search(r"<.{,2}hr[^>]*>", string) is not None:
+        string = re.sub(r"<.{,2}hr[^>]*>", '\n', string)
     if string.find('<div') > -1:
-        string = re.sub(r"<div[^>]*</div>", '', string)
-    if re.search(r"<img[^>]*/>", string) is not None:
-        string = re.sub(r"<img[^>]*/>", '', string)
-    if re.search(r"<h[^>]>", string) is not None:
-        string = re.sub(r"</?h[^>]>", '', string)
-    if re.search(r"</?b>", string) is not None:
-        string = re.sub(r"</?b>", '', string)
-    if re.search(r"<(/?tr|/?td)>", string) is not None:
-        string = re.sub(r"<(/?tr|/?td)>", '', string)
+        string = re.sub(r"</?div[^>]*>", '', string)
+    if re.search(r"<img[^>]*>", string) is not None:
+        string = re.sub(r"<img[^>]*>", '', string)
+    if re.search(r"<h[^>]*>", string) is not None:
+        string = re.sub(r"</?h[^>]*>", '', string)
+    if re.search(r"</?b[^>]*>", string) is not None:
+        string = re.sub(r"</?b[^>]*>", '', string)
+    if re.search(r"<(/?tr[^>]*|/?td[^>]*)>", string) is not None:
+        string = re.sub(r"<(/?tr[^>]*|/?td[^>]*)>", '', string)
     if re.search(r"</?table[^>]*>", string) is not None:
         string = re.sub(r"</?table[^>]*>", '', string)
     if re.search(r"&(nbsp|amp);", string) is not None:
         string = re.sub(r"&(nbsp|amp);", '', string)
     if string.find('<em') > -1:
-        string = re.sub(r"</?em>", '', string, flags=re.IGNORECASE)
+        string = re.sub(r"</?em[^>]*>", '', string, flags=re.IGNORECASE)
     if string.find('<code') > -1:
         string = re.sub(r"</?code>", '', string)
     return string
