@@ -27,59 +27,19 @@ def encode_from_html(string):   # перекодировка из html симв�
 def clear_from_tags(string):
     if re.search(r'&lt;|&gt;|quot;', string):
         string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
-    if re.search(r"</?p[^</]*>", string) is not None:
-        string = re.sub(r"</?p[^</]*>", '\n', string)
-    if re.search(r"<['/', ' ']{0,2}br['/', ' ']{0,2}>", string) is not None:
-        string = re.sub(r"<['/', ' ']{0,2}br['/', ' ']{0,2}>", '\n', string)
-    if string.find('<strong>') > -1:
-        string = string.replace('<strong>', '').replace('</strong>', '')
-    while string.find('<a') > -1:
-        temp_str = string[string.find('<a'):string.find('</a>') + 4]
-        if len(temp_str) < 2:   # кастыль, ну а что сделаешь
-            break
-        url = None
-        if temp_str.find('href') > -1 or temp_str.find('HREF') > -1:
-            url = temp_str[temp_str.find(re.search(r'href\s?=\s?"', string, flags=re.IGNORECASE).group()) + len(re.search(r'href\s?=\s?"', string, flags=re.IGNORECASE).group()):]
-            url = url[:url.find('"')]   # тупо ссылка которая в href
-        content = temp_str[temp_str.find('>') + 1:temp_str.find('</a>')]    # контент котоорый в теле тега <a>
-        if content == url:
-            string = string.replace(temp_str, ' ' + url)
+    string = re.sub(r"</?(hr|br|p|li)[^>]*>", '\n', string)
+    for i in re.findall(r"<a[^<]*</a>", string):
+        isurl = re.search(r'href=\"[^\"]*', i, flags=re.IGNORECASE)
+        if isurl is not None:
+            url = isurl.group()[isurl.group().find('"'):][1:]   # тупо ссылка которая в href
         else:
-            if url is not None:
-                string = string.replace(temp_str, ' ' + url + ' - ' + content)
-            else:
-                string = string.replace(temp_str, content)
-    if re.search(r"<span[^</]*>", string) is not None:
-        for i in re.findall(r"</?span[^</]*>", string):
-            string = string.replace(i, ' ')
-    if string.find('<ul') > -1:
-        string = re.sub(r"</?ul[^>]*>", '', string)
-    if string.find('<ol') > -1:
-        string = re.sub(r"</?ol[^>]*>", '', string)
-    if re.search(r"</?li[^>]*>", string) is not None:
-        string = re.sub(r"</?li[^>]*>", '\n', string)
-    if string.find('<u') > -1:
-        string = re.sub(r"</?u[^>]*>", '', string)
-    if re.search(r"<.{,2}hr[^>]*>", string) is not None:
-        string = re.sub(r"<.{,2}hr[^>]*>", '\n', string)
-    if string.find('<div') > -1:
-        string = re.sub(r"</?div[^>]*>", '', string)
-    if re.search(r"<img[^>]*>", string) is not None:
-        string = re.sub(r"<img[^>]*>", '', string)
-    if re.search(r"<h[^>]*>", string) is not None:
-        string = re.sub(r"</?h[^>]*>", '', string)
-    if re.search(r"</?b[^>]*>", string) is not None:
-        string = re.sub(r"</?b[^>]*>", '', string)
-    if re.search(r"<(/?tr[^>]*|/?td[^>]*)>", string) is not None:
-        string = re.sub(r"<(/?tr[^>]*|/?td[^>]*)>", '', string)
-    if re.search(r"</?table[^>]*>", string) is not None:
-        string = re.sub(r"</?table[^>]*>", '', string)
-    if re.search(r"&(nbsp|amp);", string) is not None:
-        string = re.sub(r"&(nbsp|amp);", '', string)
-    if string.find('<em') > -1:
-        string = re.sub(r"</?em[^>]*>", '', string, flags=re.IGNORECASE)
-    if string.find('<code') > -1:
-        string = re.sub(r"</?code>", '', string)
+            url = ''
+        content = re.search(r">[^<]*<", i).group()[1:-1]    # контент котоорый в теле тега <a>
+        if content == url:
+            string = string.replace(i, ' ' + url + ' ')
+        else:
+            string = string.replace(i, content + ' - ' + url + ' ')
+    string = re.sub("<[^>]*>", '', string)
     return string
 
 

@@ -26,7 +26,8 @@
 #     util.execute('TRUNCATE url_podcasts', commit=True)
 #     with open('parse_link.txt', 'r') as f:
 #         for i in enumerate(f.readlines()):
-#             parse(i[1])
+#             if i[0] < 2:
+#                 parse(i[1])
 #     # parse('https://podcasts.apple.com/podcast/id1470221669?mt=2')
 #     # parse('https://anchor.fm/s/daae468/podcast/rss')
 #     # parse('https://aerostatica.ru/podcast.xml')
@@ -73,3 +74,9 @@
 #     # parse('http://feeds.soundcloud.com/users/soundcloud:users:602278230/sounds.rss')
 #     # parse('https://podster.fm/rss.xml?pid=35648')
 #     # parse('https://feeds.simplecast.com/v1cJ8X2Z')
+
+
+# import util
+#
+#
+# print(util.execute('select description_audio from items'))
