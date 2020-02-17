@@ -83,8 +83,13 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
 
     for each_subcategory in subcat_podcast:   # добавляем подкатегории к подкасту
         if each_subcategory:   # во время срезки выходит пустая строка, доп проверка на неё
-            execute('INSERT INTO subcat_podcast(id_podcast, title_subcat) VALUES (%(p)s, %(p)s)',
-                    id_new_podcast, each_subcategory, commit=True)
+            if not execute('SELECT * FROM subcat_podcast WHERE title_subcat = (%(p)s)', each_subcategory):
+                execute('INSERT INTO subcat_podcast (title_subcat) VALUES (%(p)s)', each_subcategory, commit=True)
+            id_subcat = execute('SELECT id_subcat FROM subcat_podcast WHERE title_subcat = (%(p)s)', each_subcategory)[0].get('id_subcat')
+            execute('INSERT INTO podcast_with_subcat(id_podcast, id_subcat) VALUES (%(p)s, %(p)s)',
+                    id_new_podcast, id_subcat, commit=True)
+
+
 
     for each_keyword in keyword_podcast[:-1]:  # тот же алгоритм что и с категориями
         if not execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s', each_keyword):
@@ -181,4 +186,5 @@ def add_url_in_error_links(url):
         Добавляем url в таблицу error link, и удаляем её из основной
     """
     execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', url, commit=True)
-    execute('INSERT INTO error_links (url) VALUES (%(p)s)', url, commit=True)
+    if not execute('SELECT * FROM error_links WHERE (%(p)s)', url):
+        execute('INSERT INTO error_links (url) VALUES (%(p)s)', url, commit=True)

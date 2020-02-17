@@ -33,11 +33,14 @@ def parse(each_podcast):
             После завершения парсинга первых n выпусков, даем подкасту статус 2, который
         оповещает о том, что данный подккаст требует дозагрузки ВСЕХ подкастов.
     """
-    if each_podcast.find('apple') > -1 or each_podcast.find('itunes') > -1:    # если ссылка прям с эпл подкастов а не на рсс
+    if each_podcast.find('podcasts.apple.com') > -1 or each_podcast.find('itunes.apple.com') > -1:    # если ссылка прям с эпл подкастов а не на рсс
         old_url = each_podcast
         each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
                                     + each_podcast).text[12:-2].replace('\/', '/')
         util.change_url(each_podcast, old_url)
+
+    # print(each_podcast)
+
     try:
         html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
     except UnicodeDecodeError:
@@ -46,6 +49,7 @@ def parse(each_podcast):
     if html.find('rss') == -1:    # если это не rss лента (у рсс на индексах которые в условии написано рсс) кидаем в таблицу с битыми ссылками
         util.add_url_in_error_links(each_podcast)
         return
+
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
     # находим название подкаста
@@ -94,7 +98,7 @@ def parse(each_podcast):
                          image_podcasts, author_podcast, subcategorys_podcast, keyword_podcasts)
 
     """
-        Далее идем к выпускам подкаста, именуется этот тег(в плане сам выпуск) в rss как item, 
+        Далее идем к выпускам подкаста, именуется этот тег(в плане сам выпуск) в rss как item,
         и его столько сколько всего выпусков.
         Имеем цикл, который ходит по этим тегам, из каждого тега выкачиваем ввсё что в нём есть.
     """

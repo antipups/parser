@@ -19,6 +19,7 @@ if __name__ == '__main__':
     util.execute('TRUNCATE podcasts', commit=True)
     util.execute('TRUNCATE podcasts_with_categorys', commit=True)
     util.execute('TRUNCATE podcasts_with_keywords', commit=True)
+    util.execute('TRUNCATE podcast_with_subcat', commit=True)
     util.execute('TRUNCATE subcat_item', commit=True)
     util.execute('TRUNCATE subcat_podcast', commit=True)
     util.execute('TRUNCATE error_links', commit=True)
@@ -28,8 +29,9 @@ if __name__ == '__main__':
         for i in enumerate(f.readlines()):
             if i[0] < 11:
                 parse(i[1])
-    # parse('https://podcasts.apple.com/podcast/id1470221669?mt=2')
-    # parse('https://anchor.fm/s/daae468/podcast/rss')
+    # parse('https://linkmeup.ru/rss/podcasts')
+    # parse('http://spiridonov.ru/runetologia/rss_new/')
+    # parse('https://ria.ru/export/iasdes/rss2/jeksponat.xml')
     # parse('https://aerostatica.ru/podcast.xml')
     # parse('https://feeds.simplecast.com/CPNlXNwD')
     # parse('https://rss.simplecast.com/podcasts/4464/rss')
@@ -74,9 +76,3 @@ if __name__ == '__main__':
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:602278230/sounds.rss')
     # parse('https://podster.fm/rss.xml?pid=35648')
     # parse('https://feeds.simplecast.com/v1cJ8X2Z')
-
-
-# import util
-#
-#
-# print(util.execute('select description_audio from items'))
