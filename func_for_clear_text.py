@@ -19,6 +19,8 @@ def encode_from_html(string):   # перекодировка из html симв�
             new_word = chr(int(re.search(swap_word, string).group()[-5:-1]))
         string = re.sub(swap_word, new_word, string)
 
+    if re.search(r'&lt;|&gt;|quot;', string):
+        string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
     while re.search(r'&\w{1,8};', string) is not None:  # чистим от кода на буквах (&amp;)
         string = re.sub(re.search(r'&\w{1,8};', string).group(), '', string)
     return string

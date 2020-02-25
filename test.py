@@ -25,11 +25,11 @@ if __name__ == '__main__':
     util.execute('TRUNCATE error_links', commit=True)
     util.execute('TRUNCATE cat_item', commit=True)
     util.execute('TRUNCATE url_podcasts', commit=True)
-    with open('parse_link.txt', 'r') as f:
-        for i in enumerate(f.readlines()):
-            if i[0] < 11:
-                parse(i[1])
-    # parse('https://linkmeup.ru/rss/podcasts')
+    # with open('parse_link.txt', 'r') as f:
+    #     for i in enumerate(f.readlines()):
+    #         if i[0] < 11:
+    #             parse(i[1])
+    parse('https://podcasts.apple.com/ru/podcast/%D1%81%D0%B5%D1%80%D0%B3%D0%B5%D0%B9-%D1%81%D1%82%D0%B8%D0%BB%D0%BB%D0%B0%D0%B2%D0%B8%D0%BD-%D0%B8-%D0%B5%D0%B3%D0%BE-%D0%B4%D1%80%D1%83%D0%B7%D1%8C%D1%8F/id1207571791')
     # parse('http://spiridonov.ru/runetologia/rss_new/')
     # parse('https://ria.ru/export/iasdes/rss2/jeksponat.xml')
     # parse('https://aerostatica.ru/podcast.xml')

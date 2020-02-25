@@ -19,8 +19,8 @@ def pre_parse():
                     util.add_url_in_error_links(each_podcast.get('url_podcast'))
                 else:
                     # print(each_podcast.get('url_podcast'))
-                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
-                    # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
+                    # threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
+                    parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
             except requests.exceptions.ConnectionError:
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
 
@@ -45,7 +45,6 @@ def parse(each_podcast):
         html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
-
     if html.find('rss') == -1:    # если это не rss лента (у рсс на индексах которые в условии написано рсс) кидаем в таблицу с битыми ссылками
         util.add_url_in_error_links(each_podcast)
         return
