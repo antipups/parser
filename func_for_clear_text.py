@@ -30,18 +30,18 @@ def clear_from_tags(string):
     if re.search(r'&lt;|&gt;|quot;', string):
         string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
     string = re.sub(r"</?(hr|br|p|li)[^>]*>", '\n', string)
-    for i in re.findall(r"<a[^<]*</a>", string):
-        isurl = re.search(r'href=\"[^\"]*', i, flags=re.IGNORECASE)
-        if isurl is not None:
-            url = isurl.group()[isurl.group().find('"'):][1:]   # тупо ссылка которая в href
-        else:
-            url = ''
-        content = re.search(r">[^<]*<", i).group()[1:-1]    # контент котоорый в теле тега <a>
-        if content == url:
-            string = string.replace(i, ' ' + url + ' ')
-        else:
-            string = string.replace(i, content + ' - ' + url + ' ')
-    string = re.sub("<[^>]*>", '', string)
+    # for i in re.findall(r"<a[^<]*</a>", string):  # достаем ссылку, без тега
+    #     isurl = re.search(r'href=\"[^\"]*', i, flags=re.IGNORECASE)
+    #     if isurl is not None:
+    #         url = isurl.group()[isurl.group().find('"'):][1:]   # тупо ссылка которая в href
+    #     else:
+    #         url = ''
+    #     content = re.search(r">[^<]*<", i).group()[1:-1]    # контент котоорый в теле тега <a>
+    #     if content == url:
+    #         string = string.replace(i, ' ' + url + ' ')
+    #     else:
+    #         string = string.replace(i, content + ' - ' + url + ' ')
+    string = re.sub("<[^a][^>]*[^a]>", '', string)
     return string
 
 
