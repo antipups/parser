@@ -21,8 +21,8 @@ def encode_from_html(string):   # перекодировка из html симв�
 
     if re.search(r'&lt;|&gt;|quot;', string):
         string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
-    while re.search(r'&\w{1,8};', string) is not None:  # чистим от кода на буквах (&amp;)
-        string = re.sub(re.search(r'&\w{1,8};', string).group(), '', string)
+    while re.search(r'&[^;]{1,8};', string) is not None:  # чистим от кода на буквах (&amp;)
+        string = re.sub(re.search(r'&[^;]{1,8};', string).group(), '', string)
     return string
 
 
