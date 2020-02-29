@@ -13,25 +13,23 @@ def check_on_shit(string):      # чистим полученные строки
 def encode_from_html(string):   # перекодировка из html символов в обычные
     while re.search(r'&#\w?\d{1,4};', string) is not None:     # чистим от цифр, заменяя буквами если вохможно (&#1044;)
         swap_word = re.search(r'&#\w?\d{1,4};', string).group()    # копируем изменяемое слово
-        if len(swap_word) != 7 or not 1040 <= int(swap_word[-5:-1]) <= 1103:  # все слова которые не буквы, меняем на пробел
+        if swap_word[-5:-1].isdigit() is False or len(swap_word) != 7 or not 1040 <= int(swap_word[-5:-1]) <= 1103:  # все слова которые не буквы, меняем на пробел
             new_word = ' '
         else:
             new_word = chr(int(re.search(swap_word, string).group()[-5:-1]))
         string = re.sub(swap_word, new_word, string)
 
-    if re.search(r'&lt;|&gt;|quot;', string):
-        string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
-    print('До удаление amp', string)
+    if re.search(r'&lt;|&gt;|quot;|&amp;', string):
+        string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"').replace('&amp;', '&')
+
     while re.search(r'&[^;]{1,8};', string) is not None:  # чистим от кода на буквах (&amp;)
-        print(re.search(r'&[^;]{1,8};', string).group())
         string = re.sub(re.search(r'&[^;]{1,8};', string).group(), '', string)
-    print('После удаление amp', string)
     return string
 
 
 def clear_from_tags(string):
-    if re.search(r'&lt;|&gt;|quot;', string):
-        string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
+    # if re.search(r'&lt;|&gt;|quot;', string):     # выше прописано уже
+    #     string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
     string = re.sub(r"</?(hr|br|p|li)[^>]*>", '\n', string)
     string = re.sub("<[^a][^>]*[^a]>", '', string)
     return string

@@ -66,45 +66,44 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
 
     # проходимся по всем категориям, если такой нет записываем в категории, и соединяем с подкастом, иначе просто соединяем с подкастом
     for each_category in category_podcast[:-1]:
-        if not execute('SELECT id_category FROM categorys WHERE title_category = %(p)s', each_category):
-            execute('INSERT INTO categorys(title_category) VALUES (%(p)s)', each_category, commit=True)   # если нет такой категории, создаем
-            id_category = execute('SELECT id_category FROM categorys '
-                                  'WHERE title_category = %(p)s',
-                                   each_category)[0].get('id_category')  # находим новую категорию и записываем её
-        else:
-            id_category = execute('SELECT id_category FROM categorys WHERE title_category = %(p)s',
-                                     each_category)[0].get('id_category')
+        if len(each_category) > 0:
+            get_category = execute('SELECT id_category FROM categorys WHERE title_category = %(p)s', each_category)
+            if not get_category:
+                execute('INSERT INTO categorys(title_category) VALUES (%(p)s)', each_category, commit=True)   # если нет такой категории, создаем
+                id_category = execute('SELECT id_category FROM categorys '
+                                      'WHERE title_category = %(p)s',
+                                       each_category)[0].get('id_category')  # находим новую категорию и записываем её
+            else:
+                id_category = get_category[0].get('id_category')
 
-        if not execute('SELECT * FROM podcasts_with_categorys WHERE id_podcast = %(p)s AND id_category = %(p)s',    # если данной связки ещё нет
-                       id_new_podcast, id_category):
+            if not execute('SELECT * FROM podcasts_with_categorys WHERE id_podcast = %(p)s AND id_category = %(p)s',    # если данной связки ещё нет
+                           id_new_podcast, id_category):
 
-            execute('INSERT INTO podcasts_with_categorys(id_category, id_podcast) VALUES (%(p)s, %(p)s)',
-                    id_category, id_new_podcast, commit=True)
+                execute('INSERT INTO podcasts_with_categorys(id_category, id_podcast) VALUES (%(p)s, %(p)s)',
+                        id_category, id_new_podcast, commit=True)
 
     for each_subcategory in subcat_podcast:   # добавляем подкатегории к подкасту
-        if each_subcategory:   # во время срезки выходит пустая строка, доп проверка на неё
+        if len(each_subcategory) > 0:   # во время срезки выходит пустая строка, доп проверка на неё
             if not execute('SELECT * FROM subcat_podcast WHERE title_subcat = (%(p)s)', each_subcategory):
                 execute('INSERT INTO subcat_podcast (title_subcat) VALUES (%(p)s)', each_subcategory, commit=True)
             id_subcat = execute('SELECT id_subcat FROM subcat_podcast WHERE title_subcat = (%(p)s)', each_subcategory)[0].get('id_subcat')
             execute('INSERT INTO podcast_with_subcat(id_podcast, id_subcat) VALUES (%(p)s, %(p)s)',
                     id_new_podcast, id_subcat, commit=True)
 
-
-
     for each_keyword in keyword_podcast[:-1]:  # тот же алгоритм что и с категориями
-        if not execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s', each_keyword):
+        if len(each_keyword) > 0:
+            get_keyword = execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s', each_keyword)
+            if not get_keyword:
+                execute('INSERT INTO keywords (title_keyword) VALUES (%(p)s)', each_keyword, commit=True)
+                id_keyword = execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s',
+                                            each_keyword)[0].get('id_keyword')
+            else:
+                id_keyword = get_keyword[0].get('id_keyword')
 
-            execute('INSERT INTO keywords (title_keyword) VALUES (%(p)s)', each_keyword, commit=True)
-            id_keyword = execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s',
-                                        each_keyword)[0].get('id_keyword')
-        else:
-            id_keyword = execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s',
-                                    each_keyword)[0].get('id_keyword')
-
-        if not execute('SELECT * FROM podcasts_with_keywords WHERE id_podcast = %(p)s AND id_keyword = %(p)s',
-                       id_new_podcast, id_keyword):
-            execute('INSERT INTO podcasts_with_keywords (id_podcast, id_keyword) VALUES (%(p)s, %(p)s)',
-                    id_new_podcast, id_keyword, commit=True)
+            if not execute('SELECT * FROM podcasts_with_keywords WHERE id_podcast = %(p)s AND id_keyword = %(p)s',
+                           id_new_podcast, id_keyword):
+                execute('INSERT INTO podcasts_with_keywords (id_podcast, id_keyword) VALUES (%(p)s, %(p)s)',
+                        id_new_podcast, id_keyword, commit=True)
 
 
 def check_item(title_item, title_podcast, audio):    # проверка на то , есть ли выпуск или нет
@@ -138,25 +137,28 @@ def set_new_item(title_podcast, title_audio, description_audio, audio, image_aud
                       'AND id_podcast = %(p)s', title_audio, id_podcast)[0].get('id_item')
 
     for each_category in category_item[:-1]:
-        execute('INSERT INTO cat_item(id_item, title_category) '
-                'VALUES (%(p)s, %(p)s)', id_item, each_category,
-                commit=True)
+        if len(each_category) > 0:
+            execute('INSERT INTO cat_item(id_item, title_category) '
+                    'VALUES (%(p)s, %(p)s)', id_item, each_category,
+                    commit=True)
 
     for each_subcategory in subcategory_item[:-1]:
-        execute('INSERT INTO subcat_item(id_item, title_subcategory) '
-                'VALUES (%(p)s, %(p)s)', id_item, each_subcategory,
-                commit=True)
+        if len(each_subcategory) > 0:
+            execute('INSERT INTO subcat_item(id_item, title_subcategory) '
+                    'VALUES (%(p)s, %(p)s)', id_item, each_subcategory,
+                    commit=True)
 
     for each_keyword in keyword_item[:-1]:
-        if not execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s', each_keyword):
-            execute('INSERT INTO keywords_items (title_keyword) VALUES (%(p)s)', each_keyword, commit=True)
-            id_keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s',
-                                        each_keyword)[0].get('id_keyword_item')
-        else:
-            id_keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s',
-                                        each_keyword)[0].get('id_keyword_item')
-        execute('INSERT INTO items_with_keywords (id_item, id_keyword) VALUES (%(p)s, %(p)s)',
-                id_item, id_keyword, commit=True)
+        if len(each_keyword) > 0:
+            get_keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s', each_keyword)
+            if not get_keyword:
+                execute('INSERT INTO keywords_items (title_keyword) VALUES (%(p)s)', each_keyword, commit=True)
+                id_keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s',
+                                            each_keyword)[0].get('id_keyword_item')
+            else:
+                id_keyword = get_keyword[0].get('id_keyword_item')
+            execute('INSERT INTO items_with_keywords (id_item, id_keyword) VALUES (%(p)s, %(p)s)',
+                    id_item, id_keyword, commit=True)
 
 
 def change_status(url_podcast, status):
