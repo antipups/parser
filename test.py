@@ -11,20 +11,21 @@ def parse(url):
 
 
 if __name__ == '__main__':
-    # util.execute('TRUNCATE categorys', commit=True)
-    # util.execute('TRUNCATE items', commit=True)
-    # util.execute('TRUNCATE items_with_keywords', commit=True)
-    # util.execute('TRUNCATE keywords', commit=True)
-    # util.execute('TRUNCATE keywords_items', commit=True)
-    # util.execute('TRUNCATE podcasts', commit=True)
-    # util.execute('TRUNCATE podcasts_with_categorys', commit=True)
-    # util.execute('TRUNCATE podcasts_with_keywords', commit=True)
-    # util.execute('TRUNCATE podcast_with_subcat', commit=True)
-    # util.execute('TRUNCATE subcat_item', commit=True)
-    # util.execute('TRUNCATE subcat_podcast', commit=True)
-    # util.execute('TRUNCATE error_links', commit=True)
-    # util.execute('TRUNCATE cat_item', commit=True)
-    # util.execute('TRUNCATE url_podcasts', commit=True)
+    util.execute('TRUNCATE categorys', commit=True)
+    util.execute('TRUNCATE items', commit=True)
+    util.execute('TRUNCATE items_with_keywords', commit=True)
+    util.execute('TRUNCATE keywords', commit=True)
+    util.execute('TRUNCATE keywords_items', commit=True)
+    util.execute('TRUNCATE podcasts', commit=True)
+    util.execute('TRUNCATE podcasts_with_categorys', commit=True)
+    util.execute('TRUNCATE podcasts_with_keywords', commit=True)
+    util.execute('TRUNCATE podcast_with_subcat', commit=True)
+    util.execute('TRUNCATE subcat_item', commit=True)
+    util.execute('TRUNCATE subcat_podcast', commit=True)
+    util.execute('TRUNCATE error_links', commit=True)
+    util.execute('TRUNCATE cat_item', commit=True)
+    util.execute('TRUNCATE url_podcasts', commit=True)
+    parse('https://podcasts.apple.com/ru/podcast/a-r-bhat/id1373046661')
     # with open('parse_link.txt', 'r') as f:
     #     for i in enumerate(f.readlines()):
     #         if i[0] < 11:

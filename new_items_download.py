@@ -1,7 +1,9 @@
+#!/home/tgpodcast/venv/bin/python
+import func_for_clear_text
 import threading
 import requests
 import util
-import func_for_clear_text
+
 
 
 def pre_parse():

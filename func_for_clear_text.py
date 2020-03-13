@@ -2,7 +2,7 @@ import re
 
 
 def check_on_shit(string):      # чистим полученные строки от говна, типа сидата или спецсимволы хтмл
-    if re.search(r'&#?[^;]{1,8};', string) is not None:
+    if string.find('&#') > -1:
         string = encode_from_html(string)
     if string.find('<![CDATA[') > -1:   # чистим строку от cdata
         string = string[string.find('<![CDATA[') + 9: string.find(']]>')]
@@ -13,7 +13,7 @@ def check_on_shit(string):      # чистим полученные строки
 def encode_from_html(string):   # перекодировка из html символов в обычные
     while re.search(r'&#\w?\d{1,4};', string) is not None:     # чистим от цифр, заменяя буквами если вохможно (&#1044;)
         swap_word = re.search(r'&#\w?\d{1,4};', string).group()    # копируем изменяемое слово
-        if swap_word[-5:-1].isdigit() is False or len(swap_word) != 7 or not 1040 <= int(swap_word[-5:-1]) <= 1103:  # все слова которые не буквы, меняем на пробел
+        if swap_word[-5:-1].isdignit() is False	or len(swap_word) != 7 or not 1040 <= int(swap_word[-5:-1]) <= 1103:  # все слова которые не буквы, меняем на пробел
             new_word = ' '
         else:
             new_word = chr(int(re.search(swap_word, string).group()[-5:-1]))
@@ -21,16 +21,26 @@ def encode_from_html(string):   # перекодировка из html симв�
 
     if re.search(r'&lt;|&gt;|quot;|&amp;', string):
         string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"').replace('&amp;', '&')
-
     while re.search(r'&[^;]{1,8};', string) is not None:  # чистим от кода на буквах (&amp;)
         string = re.sub(re.search(r'&[^;]{1,8};', string).group(), '', string)
     return string
 
 
 def clear_from_tags(string):
-    # if re.search(r'&lt;|&gt;|quot;', string):     # выше прописано уже
-    #     string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"')
+    if re.search(r'&lt;|&gt;|quot;|&amp;', string):
+        string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"').replace('&amp;', '&')
     string = re.sub(r"</?(hr|br|p|li)[^>]*>", '\n', string)
+    for i in re.findall(r"<a[^<]*</a>", string):  # достаем ссылку, без тега
+        isurl = re.search(r'href=\"[^\"]*', i, flags=re.IGNORECASE)
+        if isurl is not None:
+            url = isurl.group()[isurl.group().find('"'):][1:]   # тупо ссылка которая в href
+        else:
+            url = ''
+        content = re.search(r">[^<]*<", i).group()[1:-1]    # контент котоорый в теле тега <a>
+        if content == url:
+            string = string.replace(i, ' ' + url + ' ')
+        else:
+            string = string.replace(i, content + ' - ' + url + ' ')
     string = re.sub("<[^a][^>]*[^a]>", '', string)
     return string
 

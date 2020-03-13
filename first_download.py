@@ -1,3 +1,6 @@
+#!/home/tgpodcast/venv/bin/python
+import time
+
 import func_for_clear_text
 import threading
 import requests
@@ -9,17 +12,16 @@ def pre_parse():
         Фукнкция которая парсит все url'ы с бд, и под каждый url выделяет поток, после чего парсит
         с url'a инфу.
     """
-    for each_podcast in util.check_new_podcast():  # проходимся по ВСЕМ подкастам
+    for each_podcast in util.get_new_podcast_url():  # проходимся по ВСЕМ подкастам
         if each_podcast.get('status_podcast') == 1:  # если подкаст не скачан ещё
             if not each_podcast.get('url_podcast').startswith('http'):   # если нет http / https - на помойку
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
                 continue
             try:
-                if requests.get(each_podcast.get('url_podcast')).status_code == 404:     # если страницы не существует, кидаем в таблицу с битыми ссылками
-                    util.add_url_in_error_links(each_podcast.get('url_podcast'))
+                while threading.active_count() > 50:
+                    time.sleep(1)
                 else:
-                    # print(each_podcast.get('url_podcast'))
-                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), )).start()   # ебашим всё в потоки
+                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'),)).start()  # ебашим всё в потоки
                     # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
             except requests.exceptions.ConnectionError:
                 util.add_url_in_error_links(each_podcast.get('url_podcast'))
@@ -33,22 +35,29 @@ def parse(each_podcast):
             После завершения парсинга первых n выпусков, даем подкасту статус 2, который
         оповещает о том, что данный подккаст требует дозагрузки ВСЕХ подкастов.
     """
-    if each_podcast.find('podcasts.apple.com') > -1 or each_podcast.find('itunes.apple.com') > -1:    # если ссылка прям с эпл подкастов а не на рсс
-        old_url = each_podcast
-        each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
-                                    + each_podcast).text[12:-2].replace('\/', '/')
-        util.change_url(each_podcast, old_url)
 
-    # print(each_podcast)
+    old_url = each_podcast
+    each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
+                                + each_podcast).text[12:-2].replace('\/', '/')
+    if each_podcast.startswith('valid URL'):    # если юрл / рсс поломанные
+        util.add_url_in_error_links(old_url)
+        return
+    elif each_podcast.startswith('L appears to ') is False:     # если всё норм с РСС лентой (если изначально её ввели)
+        util.change_url(each_podcast, old_url)
+    else:   # если всё нормально, то есть была ссылка на айтунс, стала на рсс
+        each_podcast = old_url
 
     try:
         html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
+    except requests.exceptions.MissingSchema:
+        print('ERROR PARSE -- ' + each_podcast)
+        return
+
     if html.find('rss') == -1:    # если это не rss лента (у рсс на индексах которые в условии написано рсс) кидаем в таблицу с битыми ссылками
         util.add_url_in_error_links(each_podcast)
         return
-
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
     # находим название подкаста
@@ -83,8 +92,6 @@ def parse(each_podcast):
     # находим категории если они есть
     categorys_podcast, subcategorys_podcast = func_for_clear_text.parse_category(pre_item_html)
 
-    # print('СССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССССылка ', each_podcast)
-    # print('Название: ' + title_podcast + '\n',
     #       'Описание: ' + description_podcast + '\n',
     #       'Картинка: ' + image_podcasts + '\n',
     #       'Ключевые слова: ' , keyword_podcasts , '\n',
@@ -97,7 +104,7 @@ def parse(each_podcast):
                          image_podcasts, author_podcast, subcategorys_podcast, keyword_podcasts)
 
     """
-        Далее идем к выпускам подкаста, именуется этот тег(в плане сам выпуск) в rss как item,
+        Далее идем к выпускам подкаста, именуется этот тег(в плане сам выпуск) в rss как item, 
         и его столько сколько всего выпусков.
         Имеем цикл, который ходит по этим тегам, из каждого тега выкачиваем ввсё что в нём есть.
     """
@@ -165,3 +172,4 @@ def parse(each_podcast):
 
 if __name__ == '__main__':
     pre_parse()
+    # parse('https://podcasts.apple.com/ru/podcast/a-r-bhat/id1373046661')

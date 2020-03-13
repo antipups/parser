@@ -1,7 +1,9 @@
+#!/home/tgpodcast/venv/bin/python
+import func_for_clear_text
 import threading
 import requests
 import util
-import func_for_clear_text
+
 
 
 def pre_parse():
@@ -100,7 +102,7 @@ def parse(each_podcast):
         #       )
 
     util.change_status(each_podcast, 3)
-
+    print('end')
 
 if __name__ == '__main__':
     pre_parse()
