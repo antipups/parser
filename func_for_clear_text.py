@@ -13,7 +13,7 @@ def check_on_shit(string):      # чистим полученные строки
 def encode_from_html(string):   # перекодировка из html символов в обычные
     while re.search(r'&#\w?\d{1,4};', string) is not None:     # чистим от цифр, заменяя буквами если вохможно (&#1044;)
         swap_word = re.search(r'&#\w?\d{1,4};', string).group()    # копируем изменяемое слово
-        if swap_word[-5:-1].isdignit() is False	or len(swap_word) != 7 or not 1040 <= int(swap_word[-5:-1]) <= 1103:  # все слова которые не буквы, меняем на пробел
+        if swap_word[-5:-1].isdigit() is False	or len(swap_word) != 7 or not 1040 <= int(swap_word[-5:-1]) <= 1103:  # все слова которые не буквы, меняем на пробел
             new_word = ' '
         else:
             new_word = chr(int(re.search(swap_word, string).group()[-5:-1]))
@@ -93,4 +93,4 @@ def clear_pubdata(string):
         return None
     string = re.sub(month, dict_day.get(month), string)  # запуливаем вместо названия месяца номер месяца
     string = re.sub(r'[ :]', '', string)    # вместо пробела и двоиточия ничего, в инт бахаем
-    return string[4:8] + string[2:4] + string[:2] + string[-6:]   # подводим под шаблон бд
+    return string[4:8] + string[2:4] + string[:2]   # подводим под шаблон бд

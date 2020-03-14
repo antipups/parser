@@ -50,6 +50,7 @@ def execute(sql, *args, commit=False):
 def check_new_podcast():
     return execute('SELECT * FROM url_podcasts')
 
+
 def get_new_podcast_url():
     return execute('SELECT * FROM url_podcasts WHERE status_podcast=1')
 
@@ -144,6 +145,7 @@ def set_new_item(title_podcast, title_audio, description_audio, audio, image_aud
     except IndexError:
         print('Ошибка, не коммитит')
         return
+
 
     id_item = execute('SELECT id_item FROM items WHERE title_audio = %(p)s '
                       'AND id_podcast = %(p)s', title_audio, id_podcast)[0].get('id_item')
