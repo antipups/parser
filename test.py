@@ -26,7 +26,8 @@ if __name__ == '__main__':
     util.execute('TRUNCATE cat_item', commit=True)
     util.execute('TRUNCATE url_podcasts', commit=True)
     # parse('https://podcasts.apple.com/ru/podcast/a-r-bhat/id1373046661')
-    parse('http://www.booksoftitans.com/feed/podcast/')
+    # parse('http://www.booksoftitans.com/feed/podcast/')
+    parse('http://kbvr.com/podcasts/BeyondThePage/_feed.xml')
     # with open('parse_link.txt', 'r') as f:
     #     for i in enumerate(f.readlines()):
     #         if i[0] < 11:

@@ -1,4 +1,5 @@
 #!/home/tgpodcast/venv/bin/python
+import re
 import time
 
 import func_for_clear_text
@@ -121,7 +122,8 @@ def parse(each_podcast):
         # переходим в тег с ссылкой на аудио
         enclosure = item_code[item_code.find('<enclosure'):]
         enclosure = enclosure[enclosure.find('url="') + 5:enclosure.find('/>')]
-        mp3 = enclosure[: enclosure.find('"')]  # получаем аудио
+        mp3 = re.search('url=[^"]*"[^"]*"', enclosure, flags=re.DOTALL).group()
+        mp3 = mp3[mp3.find('"') + 1: -1]  # получаем аудио
 
         # получаем описание выпуска
         description_item = None
