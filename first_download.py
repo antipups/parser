@@ -1,7 +1,5 @@
-#!/home/tgpodcast/venv/bin/python
 import re
 import time
-
 import func_for_clear_text
 import threading
 import requests
@@ -32,7 +30,7 @@ def parse(each_podcast):
     """
             Вначале закачиваю инфу о подкасте, название, и прочее;
         После благодаря циклу парсим выпуски, если что кол-во выпусков задано на
-        87-ой строке.
+        22-ой строке.
             После завершения парсинга первых n выпусков, даем подкасту статус 2, который
         оповещает о том, что данный подккаст требует дозагрузки ВСЕХ подкастов.
     """
@@ -53,9 +51,14 @@ def parse(each_podcast):
         html = requests.get(each_podcast).text
     except requests.exceptions.MissingSchema:
         print('ERROR PARSE -- ' + each_podcast)
+        util.add_url_in_error_links(old_url)
         return
     except requests.exceptions.SSLError:    # если сайт плохой (заразный тип)
         html = requests.get(each_podcast, verify=False).text
+    except requests.exceptions.InvalidSchema:   # если нет доступа по какой-то причине, в основном из-за страны
+        print('Нет коннекта - ', old_url)
+        util.add_url_in_error_links(old_url)
+        return
 
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
@@ -90,14 +93,6 @@ def parse(each_podcast):
 
     # находим категории если они есть
     categorys_podcast, subcategorys_podcast = func_for_clear_text.parse_category(pre_item_html)
-
-    #       'Описание: ' + description_podcast + '\n',
-    #       'Картинка: ' + image_podcasts + '\n',
-    #       'Ключевые слова: ' , keyword_podcasts , '\n',
-    #       'Автор: ' + author_podcast + '\n',
-    #       'Категории: ' , categorys_podcast , '\n',
-    #       'Подкатегории: ' , subcategorys_podcast , '\n',
-    #       )
 
     util.set_new_podcast(each_podcast, title_podcast, description_podcast, categorys_podcast,
                          image_podcasts, author_podcast, subcategorys_podcast, keyword_podcasts)
@@ -139,8 +134,10 @@ def parse(each_podcast):
         # получаем область с длительностью аудио
         duration_item = str()
         if item_code.find('duration>') > -1:
-            temp_code = item_code[item_code.find('duration>') + 9: item_code.find('duration>') + 20]
-            duration_item = temp_code[:temp_code.find('</')]    # получаем длительность аудио
+            temp_code = item_code[item_code.find('duration>') + 9:]
+            duration_item = temp_code[:temp_code.find('</')]     # получаем длительность аудио
+            if duration_item.startswith('<![CDATA'):
+                duration_item = duration_item[9:-3]
             if duration_item and duration_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
                 duration_item = func_for_clear_text.convert_time(int(duration_item))
 
@@ -160,16 +157,6 @@ def parse(each_podcast):
         util.set_new_item(title_podcast, title_item, description_item, mp3, image_item,
                           pubdata_item, duration_item, categorys_item, subcategorys_item, keyword_item)
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-        # print('Название выпуска: ' + title_item + '\n',
-        #       'Описание выпуска: ' + str(description_item) + '\n',
-              # 'Музыка: ' + mp3 + '\n',
-              # 'Дата публикации выпуска: ' + pubdata_item + '\n',
-              # 'Длительность выпуска: ' + duration_item + '\n',
-              # 'Картинка выпуска: ' + image_item + '\n',
-              # 'Категории выпуска: ', categorys_item , '\n',
-              # 'Подкатегории выпуска: ', subcategorys_item , '\n',
-              # 'Ключевые слова выпуска: ', keyword_item , '\n',
-              # )
 
 
 if __name__ == '__main__':

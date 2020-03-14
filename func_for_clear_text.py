@@ -33,8 +33,7 @@ def clear_from_tags(string):
     for i in re.findall(r"<a[^<]*</a>", string):  # достаем ссылку, без тега
         isurl = re.search(r'href=\"[^\"]*', i, flags=re.IGNORECASE)
         if isurl is not None:
-            url = isurl.group()[isurl.group().find('"'):][1:]   # тупо ссылка которая в href
-            # print(url)
+            url = isurl.group()[isurl.group().find('"') + 1:]   # тупо ссылка которая в href
         else:
             url = ''
         content = re.search(r">[^<]*<", i).group()[1:-1]    # контент котоорый в теле тега <a>
@@ -42,7 +41,7 @@ def clear_from_tags(string):
             string = string.replace(i, ' ' + url + ' ')
         else:
             string = string.replace(i, content + ' - ' + url + ' ')
-    string = re.sub("<[^a][^>]*[^a]>", '', string)  # удаление вообще всех тегов
+    string = re.sub("<[^>]*>", '', string)  # удаление вообще всех тегов
     return string
 
 
