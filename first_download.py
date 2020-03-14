@@ -47,7 +47,6 @@ def parse(each_podcast):
         util.change_url(each_podcast, old_url)
     else:   # если всё нормально, то есть была ссылка на айтунс, стала на рсс
         each_podcast = old_url
-
     try:
         html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
     except UnicodeDecodeError:
@@ -55,6 +54,8 @@ def parse(each_podcast):
     except requests.exceptions.MissingSchema:
         print('ERROR PARSE -- ' + each_podcast)
         return
+    except requests.exceptions.SSLError:    # если сайт плохой (заразный тип)
+        html = requests.get(each_podcast, verify=False).text
 
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
@@ -120,10 +121,12 @@ def parse(each_podcast):
         title_item = func_for_clear_text.check_on_shit(title_item)
 
         # переходим в тег с ссылкой на аудио
-        enclosure = item_code[item_code.find('<enclosure'):]
-        enclosure = enclosure[enclosure.find('url="') + 5:enclosure.find('/>')]
-        mp3 = re.search('url=[^"]*"[^"]*"', enclosure, flags=re.DOTALL).group()
-        mp3 = mp3[mp3.find('"') + 1: -1]  # получаем аудио
+        mp3 = str()
+        if item_code.find('<enclosure') > -1:
+            enclosure = item_code[item_code.find('<enclosure'):]
+            enclosure = enclosure[enclosure.find('url'):enclosure.find('/>')]
+            mp3 = re.search('url=[^"]*"[^"]*"', enclosure, flags=re.DOTALL).group()
+            mp3 = mp3[mp3.find('"') + 1: -1]  # получаем аудио
 
         # получаем описание выпуска
         description_item = None
