@@ -55,9 +55,6 @@ def parse(each_podcast):
         print('ERROR PARSE -- ' + each_podcast)
         return
 
-    if html.find('rss') == -1:    # если это не rss лента (у рсс на индексах которые в условии написано рсс) кидаем в таблицу с битыми ссылками
-        util.add_url_in_error_links(each_podcast)
-        return
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
     # находим название подкаста
