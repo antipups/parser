@@ -15,7 +15,7 @@ if __name__ == '__main__':
     util.execute('TRUNCATE items', commit=True)
     util.execute('TRUNCATE items_with_keywords', commit=True)
     util.execute('TRUNCATE keywords', commit=True)
-    # util.execute('TRUNCATE keywords_items', commit=True)
+    util.execute('TRUNCATE keywords_items', commit=True)
     util.execute('TRUNCATE podcasts', commit=True)
     util.execute('TRUNCATE podcasts_with_categorys', commit=True)
     util.execute('TRUNCATE podcasts_with_keywords', commit=True)

@@ -259,7 +259,6 @@ def set_new_item(id_of_podcast, list_of_items):
     cursor = connect().cursor()         # открываемванльный коннекшин
     cursor.execute(query)
     connect().commit()
-    # connect().close()
 
     ids = tuple(row.get('id_item') for row in execute('SELECT id_item FROM items WHERE id_podcast = %(p)s', id_of_podcast))     # id-шники выпусков
 
@@ -268,7 +267,7 @@ def set_new_item(id_of_podcast, list_of_items):
     for keywords in tuple(item[-1] for item in list_of_items):  # генерируем ключ слова без повторений
         new_words = new_words.union(set(keywords))
 
-    query_for_get = 'SELECT title_keyword ' \
+    query_for_get = 'SELECT * ' \
                     'FROM ' \
                     'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(new_words) + '"'
 
@@ -279,16 +278,12 @@ def set_new_item(id_of_podcast, list_of_items):
         cursor.execute(query_for_insert_keywords[:-4])
         connect().commit()
 
+    ids_of_new_words = {row.get('title_keyword'): row.get('id_keyword_item') for row in execute(query_for_get)}  # айди всех новых слов
     query_for_connect_all = 'INSERT INTO items_with_keywords (id_item, id_keyword ) VALUES '
-    for item in enumerate(list_of_items):   # вставляем ключевые слова + привязки к выпускам
+    for item in enumerate(list_of_items):   #
         if item[1][-1]:
-            # чекаем айдишники вставленных слов, и прикрепляем их к строке вместе с выпуском
-            query_for_get = 'SELECT id_keyword_item ' \
-                            'FROM ' \
-                            'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(item[1][-1]) + '"'
-
-            ids_keywords = tuple(str(row.get('id_keyword_item')) for row in execute(query_for_get))
-            query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(ids_keywords) + '), '
+            tuple_with_id_keywords = tuple(str(ids_of_new_words.get(keyword)) for keyword in item[1][-1])    # генерируем по словам айдишники
+            query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
 
     if len(query_for_connect_all) > 62:
         cursor.execute(query_for_connect_all[:-2])
