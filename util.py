@@ -107,10 +107,9 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
             execute('INSERT INTO podcast_with_subcat(id_podcast, id_subcat) VALUES (%(p)s, %(p)s)',
                     id_new_podcast, id_subcat, commit=True)
 
-
-
     for each_keyword in keyword_podcast[:-1]:  # тот же алгоритм что и с категориями
         if len(each_keyword) > 0:
+            each_keyword = each_keyword.lower()
             keyword = execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s', each_keyword)
 
             if not keyword:
@@ -177,6 +176,7 @@ def set_new_item(title_podcast, title_audio, description_audio, audio, image_aud
 
     for each_keyword in keyword_item[:-1]:
         if len(each_keyword) > 0:
+            each_keyword = each_keyword.lower()
             keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s', each_keyword)
             
             if not keyword:
