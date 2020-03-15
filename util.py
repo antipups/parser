@@ -68,12 +68,12 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
 
     warning = False
     if not description_podcasts:
-        description_podcasts = None
+        description_podcasts = 'NULL'
     if not url_image_podcast:
-        url_image_podcast = None
+        url_image_podcast = 'NULL'
         warning = True
     if not author_podcast:
-        author_podcast = None
+        author_podcast = 'NULL'
 
     execute('INSERT INTO podcasts (title_podcast, description_podcast, url_image_podcast, author_podcast, id_podcast, warning) '  # добавляем новый подкаст
             'VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', title_podcast, description_podcasts, url_image_podcast, author_podcast, id_new_podcast, warning,
@@ -239,42 +239,60 @@ def set_new_item(id_of_podcast, list_of_items):
             'VALUES '       # строка на дополнение к запросу
 
     for item in list_of_items:
-        title, description, image, duration, pubdata, audio = item[:-1]     # именуем все полученные элементы (чтоб с ними было удобней работать)
+        title, description, audio, image, pubdata, duration = item[:-1]     # именуем все полученные элементы (чтоб с ними было удобней работать)
 
-        if not description:  # if детектит пустую строку, а None - нет
-            description = None
-        if not image:
-            image = None
-        if not duration:
-            duration = None
-        if not pubdata:
-            pubdata = None
-        if not audio:
-            audio = None
+        # если ничего нет - зануляем
+        description = 'NULL' if not description else '"' + description + '"'
+        image = 'NULL' if not image else '"' + image + '"'
+        duration = 'NULL' if not duration else '"' + duration + '"'
+        pubdata = 'NULL' if not pubdata else '"' + pubdata + '"'
+        audio = 'NULL' if not audio else '"' + audio + '"'
 
         if title.find('"') > -1:
             title = title.replace('"', '""')
         if description and description.find('"') > -1:
-            description = description.replace('"', '""')
-        query += '({}, "{}", "{}", "{}", "{}", "{}", "{}"), '.format(id_of_podcast, title, description, audio, image, pubdata, duration)
+            description = description.replace('"', '""')[1:-1]
+        query += '({}, "{}", {}, {}, {}, {}, {}), '.format(id_of_podcast, title, description, audio, image, pubdata, duration)
     else:
         query = query[:-2]
 
     cursor = connect().cursor()         # открываемванльный коннекшин
-    # execute(query, commit=True)       # пуллим в бд все выпуски
     cursor.execute(query)
     connect().commit()
     # connect().close()
 
-    ids = tuple(row.get('id_item') for row in execute('SELECT id_item FROM items WHERE id_podcast = %(p)s', id_of_podcast))
+    ids = tuple(row.get('id_item') for row in execute('SELECT id_item FROM items WHERE id_podcast = %(p)s', id_of_podcast))     # id-шники выпусков
 
-    for item in enumerate(list_of_items):
-        # далее вставляем категории / ключ слова / подкатегории
-        # if item[1][-1]:
-        #     query_for_category = 'INSERT INTO cat_item(id_item, title_category) VALUES '
-        #     query_for_category += '({}, "'.format(ids[item[0]]) + '"), ({}, "'.format(ids[item[0]]).join(item[1][-1]) + '")'
-        #     print(query_for_category)
+    query_for_insert_keywords = 'INSERT INTO keywords_items (title_keyword) VALUES ("'
+    new_words = set()
+    for keywords in tuple(item[-1] for item in list_of_items):  # генерируем ключ слова без повторений
+        new_words = new_words.union(set(keywords))
 
-        print(item[1][-1])
+    query_for_get = 'SELECT title_keyword ' \
+                    'FROM ' \
+                    'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(new_words) + '"'
 
+    uniq_words = new_words.difference(set(row.get('title_keyword') for row in execute(query_for_get)))      # получаем слова которых НЕТ в бд то есть новые
+    query_for_insert_keywords += '"), ("'.join(uniq_words) + '"), ("'   # создаем запрос только с НОВЫМИ словами
+
+    if len(query_for_insert_keywords) > 52:     # если ключевые слова есть
+        cursor.execute(query_for_insert_keywords[:-4])
+        connect().commit()
+
+    query_for_connect_all = 'INSERT INTO items_with_keywords (id_item, id_keyword ) VALUES '
+    for item in enumerate(list_of_items):   # вставляем ключевые слова + привязки к выпускам
+        if item[1][-1]:
+            # чекаем айдишники вставленных слов, и прикрепляем их к строке вместе с выпуском
+            query_for_get = 'SELECT id_keyword_item ' \
+                            'FROM ' \
+                            'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(item[1][-1]) + '"'
+
+            ids_keywords = tuple(str(row.get('id_keyword_item')) for row in execute(query_for_get))
+            query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(ids_keywords) + '), '
+
+    if len(query_for_connect_all) > 62:
+        cursor.execute(query_for_connect_all[:-2])
+        connect().commit()
+
+    connect().close()
 

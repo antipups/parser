@@ -15,7 +15,7 @@ if __name__ == '__main__':
     util.execute('TRUNCATE items', commit=True)
     util.execute('TRUNCATE items_with_keywords', commit=True)
     util.execute('TRUNCATE keywords', commit=True)
-    util.execute('TRUNCATE keywords_items', commit=True)
+    # util.execute('TRUNCATE keywords_items', commit=True)
     util.execute('TRUNCATE podcasts', commit=True)
     util.execute('TRUNCATE podcasts_with_categorys', commit=True)
     util.execute('TRUNCATE podcasts_with_keywords', commit=True)
@@ -42,10 +42,11 @@ if __name__ == '__main__':
     # parse('https://feeds.hubhopper.com/25333229288e1d7fcb52b0e24ab39b29.rss?eps=all')
     # parse('http://podcast.hr-online.de/buchmesse2014/podcast.xml')
     # parse('http://actorstalkacting.com/feed/podcast/')
-    with open('parse_link.txt', 'r') as f:
-        for i in enumerate(f.readlines()):
-            if 25 < i[0] < 40:
-                parse(i[1])
+    parse('https://tpair.org/feed/podcast')
+    # with open('parse_link.txt', 'r') as f:
+    #     for i in enumerate(f.readlines()):
+    #         if 25 < i[0] < 40:
+    #             parse(i[1])
     # parse('https://podcasts.apple.com/ru/podcast/%D1%81%D0%B5%D1%80%D0%B3%D0%B5%D0%B9-%D1%81%D1%82%D0%B8%D0%BB%D0%BB%D0%B0%D0%B2%D0%B8%D0%BD-%D0%B8-%D0%B5%D0%B3%D0%BE-%D0%B4%D1%80%D1%83%D0%B7%D1%8C%D1%8F/id1207571791')
     # parse('http://spiridonov.ru/runetologia/rss_new/')
     # parse('https://ria.ru/export/iasdes/rss2/jeksponat.xml')

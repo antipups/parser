@@ -66,7 +66,7 @@ def parse(each_podcast):
         util.add_url_in_error_links(old_url, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
         return
 
-    if re.search(r'<.*\s>', html):
+    if html.find(' >') > -1:
         for tag in re.findall(r'<.*\s>', html):
             html = re.sub(tag, tag[:-2] + tag[-1], html)
 
@@ -179,9 +179,16 @@ def parse(each_podcast):
         list_of_items.append((title_item, description_item, mp3, image_item,
                               pubdata_item, duration_item, keyword_item))
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-
     util.set_new_item(id_of_podcast, list_of_items)
 
 
+
 if __name__ == '__main__':
-    pre_parse()
+    # pre_parse()
+    parse('https://tpair.org/feed/podcast')
+    # parse('https://web-standards.ru/podcast/feed/')
+    # parse('https://podster.fm/rss.xml?pid=686')
+    # while threading.active_count() > 0:
+    #     print(threading.active_count())
+    # else:
+    #     print('кончил')
