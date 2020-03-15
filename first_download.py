@@ -60,15 +60,25 @@ def parse(each_podcast):
         util.add_url_in_error_links(old_url, reason='Нет доступа по причине, страны или чего-то подобного')
         return
 
-    if html.find('feeds.feedburner') > -1:
-        util.add_url_in_error_links(old_url, reason='Плохая рсс лента (с рекламой и прочим)')
+    if html.find('feeds.feedburner') > -1 or re.search(r'<script[>]*', html):
+        util.add_url_in_error_links(old_url, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
         return
+
+    if re.search(r'<.*\s>', html):
+        for tag in re.findall(r'<.*\s>', html):
+            html = re.sub(tag, tag[:-2] + tag[-1], html)
 
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
     # находим название подкаста
-    title_podcast = pre_item_html[pre_item_html.find('<title>') + 7: pre_item_html.find('</title>')]
-    title_podcast = func_for_clear_text.check_on_shit(title_podcast)  # название пригодится при парсинге выпусков
+    pre_title = re.search(r'<title[^>]*>[^<]*</title>', pre_item_html)
+    title_podcast = str()
+    if pre_title:   # если тайтл есть, но рсска пока норм, иначе в помойку
+        title_podcast = pre_title.group()
+        title_podcast = title_podcast[title_podcast.find('>') + 1:title_podcast.rfind('</')]
+        title_podcast = func_for_clear_text.check_on_shit(title_podcast)  # название пригодится при парсинге выпусков
+    else:
+        util.add_url_in_error_links(old_url, reason='Некорректная рсс лента.')
 
     # находим описание подкаста
     description_podcast = None
@@ -124,9 +134,9 @@ def parse(each_podcast):
         mp3 = str()
         if item_code.find('<enclosure') > -1:
             enclosure = item_code[item_code.find('<enclosure'):]
-            enclosure = enclosure[enclosure.find('url'):enclosure.find('/>')]
-            mp3 = re.search('url=[^"]*"[^"]*"', enclosure, flags=re.DOTALL).group()
-            mp3 = mp3[mp3.find('"') + 1: -1]  # получаем аудио
+            enclosure = enclosure[enclosure.find('url'):enclosure.find('>')]
+            mp3 = re.search(r'url=[^\'\"]*(\'|\")[^\'\"]*', enclosure, flags=re.DOTALL).group()
+            mp3 = mp3[mp3.find(re.search(r'\"|\'', mp3).group()) + 1:]  # получаем аудио
 
         # получаем описание выпуска
         description_item = None
@@ -138,8 +148,9 @@ def parse(each_podcast):
 
         # получаем область с длительностью аудио
         duration_item = str()
-        if item_code.find('duration>') > -1:
-            temp_code = item_code[item_code.find('duration>') + 9:]
+        duration_code = re.search(r'duration[^>]*>', item_code)     # для обхода плохо написанного тега
+        if duration_code:
+            temp_code = item_code[item_code.find(duration_code.group()) + len(duration_code.group()):]
             duration_item = temp_code[:temp_code.find('</')]     # получаем длительность аудио
             if duration_item.startswith('<![CDATA'):
                 duration_item = duration_item[9:-3]
@@ -150,8 +161,8 @@ def parse(each_podcast):
         image_item = str()
         if item_code.find('image ') > -1 and item_code.find('"image"') == -1:
             temp_code = item_code[item_code.find('image ') + 6:]
-            temp_code = temp_code[temp_code.find('href="') + 6:]
-            image_item = temp_code[: temp_code.find('"')]
+            temp_code = re.search(r'href=[^\"\']*(\"|\')[^\"|\']*', temp_code).group()
+            image_item = temp_code[temp_code.find(re.search(r'\"|\'', temp_code).group()) + 1:]
 
         categorys_item, subcategorys_item = func_for_clear_text.parse_category(item_code[:item_code.find('</item>')])
 
