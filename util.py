@@ -64,8 +64,17 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
     id_new_podcast = execute('SELECT id FROM url_podcasts WHERE url_podcast = %(p)s',
                              url_podcast)[0].get('id')
 
-    execute('INSERT INTO podcasts (title_podcast, description_podcast, url_image_podcast, author_podcast, id_podcast) '  # добавляем новый подкаст
-            'VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', title_podcast, description_podcasts, url_image_podcast, author_podcast, id_new_podcast,
+    warning = None
+    if not description_podcasts:
+        description_podcasts = None
+    if not url_image_podcast:
+        url_image_podcast = None
+        warning = True
+    if not author_podcast:
+        author_podcast = None
+
+    execute('INSERT INTO podcasts (title_podcast, description_podcast, url_image_podcast, author_podcast, id_podcast, warning) '  # добавляем новый подкаст
+            'VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', title_podcast, description_podcasts, url_image_podcast, author_podcast, id_new_podcast, warning,
             commit=True)
 
     # проходимся по всем категориям, если такой нет записываем в категории, и соединяем с подкастом, иначе просто соединяем с подкастом
