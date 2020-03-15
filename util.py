@@ -137,6 +137,10 @@ def set_new_item(title_podcast, title_audio, description_audio, audio, image_aud
         image_audio = None
     if not pubdata_audio:
         pubdata_audio = None
+    if not description_audio:
+        description_audio = None
+    if not audio:
+        audio = None
 
     try:
         execute('INSERT INTO items (id_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio, duration_audio)'

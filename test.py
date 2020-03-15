@@ -34,7 +34,9 @@ if __name__ == '__main__':
     # parse('https://anchor.fm/s/d45d2f8/podcast/rss')
     # parse('http://feeds.feedburner.com/blogspot/vZrx')
     # parse('https://aidpodcast.libsyn.com/rss')
-    parse('http://feeds.feedburner.com/blogspot/vZrx')
+    # parse('http://feeds.feedburner.com/blogspot/vZrx')
+    # parse('https://anchor.fm/s/1297ccfc/podcast/rss')
+    parse('https://abnormalentertainment.com/abnormalbonus?format=rss')
                 # parse('https://sally-apokedak.com/feed/podcast/')
     # with open('parse_link.txt', 'r') as f:
     #     for i in enumerate(f.readlines()):
