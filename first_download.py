@@ -71,11 +71,12 @@ def parse(each_podcast):
     if pre_item_html.find('description') > -1:
         description_podcast = func_for_clear_text.parse_description(pre_item_html)
 
+    image_podcasts = str()
     # находим картинку подкаста
     if pre_item_html.find('<image>') > -1:
         image_podcasts = pre_item_html[pre_item_html.find('<image>') + 7: pre_item_html.find('</image>')]
         image_podcasts = image_podcasts[image_podcasts.find('<url>') + 5: image_podcasts.find('</url>')]
-    else:
+    elif pre_item_html.find('image') > -1:
         image_podcasts = pre_item_html[pre_item_html.find('image') + 5:]
         image_podcasts = image_podcasts[image_podcasts.find('href="') + 6:]
         image_podcasts = image_podcasts[: image_podcasts.find('"')]

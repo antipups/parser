@@ -30,7 +30,12 @@ if __name__ == '__main__':
     # parse('http://kbvr.com/podcasts/BeyondThePage/_feed.xml')
     # parse('https://podcasts.apple.com/ru/podcast/a-chrannag/id1455729774')
     # parse('https://podcasts.apple.com/ru/podcast/abdel-hussein/id1360139742')
-    parse('https://librivox.org/rss/6978')
+    # parse('https://librivox.org/rss/6978')
+    # parse('https://anchor.fm/s/d45d2f8/podcast/rss')
+    # parse('http://feeds.feedburner.com/blogspot/vZrx')
+    # parse('https://aidpodcast.libsyn.com/rss')
+    parse('http://feeds.feedburner.com/blogspot/vZrx')
+                # parse('https://sally-apokedak.com/feed/podcast/')
     # with open('parse_link.txt', 'r') as f:
     #     for i in enumerate(f.readlines()):
     #         if i[0] < 11:
