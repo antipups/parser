@@ -60,7 +60,7 @@ def parse(each_podcast):
         util.add_url_in_error_links(old_url, reason='Нет доступа по причине, страны или чего-то подобного')
         return
 
-    if html.find('feeds.feedburner') > -1 or re.search(r'<script[>]*', html):
+    if html.find('feeds.feedburner') > -1 or re.search(r'<script[^>]*', html):
         util.add_url_in_error_links(old_url, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
         return
 
