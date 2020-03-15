@@ -39,7 +39,8 @@ if __name__ == '__main__':
     # parse('https://abnormalentertainment.com/abnormalbonus?format=rss')
     # parse('https://www.ngv.vic.gov.au/podcasts/australianimpressionismseminars.xml')
     # parse('https://sally-apokedak.com/feed/podcast/')
-    parse('https://feeds.hubhopper.com/25333229288e1d7fcb52b0e24ab39b29.rss?eps=all')
+    # parse('https://feeds.hubhopper.com/25333229288e1d7fcb52b0e24ab39b29.rss?eps=all')
+    parse('http://podcast.hr-online.de/buchmesse2014/podcast.xml')
     # parse('http://actorstalkacting.com/feed/podcast/')
     # with open('parse_link.txt', 'r') as f:
     #     for i in enumerate(f.readlines()):

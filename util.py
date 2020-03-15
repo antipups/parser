@@ -1,3 +1,5 @@
+import datetime
+
 import pymysql.cursors
 import config
 
@@ -80,6 +82,9 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
     # проходимся по всем категориям, если такой нет записываем в категории, и соединяем с подкастом, иначе просто соединяем с подкастом
     for each_category in category_podcast[:-1]:
         if each_category:
+            if each_category.startswith('http'):
+                continue
+
             category = execute('SELECT id_category FROM categorys WHERE title_category = %(p)s', each_category)
             if not category:
                 execute('INSERT INTO categorys(title_category, ru_title) VALUES (%(p)s, %(p)s)', each_category, each_category, commit=True)   # если нет такой категории, создаем
@@ -125,6 +130,8 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
                 execute('INSERT INTO podcasts_with_keywords (id_podcast, id_keyword) VALUES (%(p)s, %(p)s)',
                         id_new_podcast, id_keyword, commit=True)
 
+    return id_new_podcast
+
 
 def check_item(title_item, title_podcast, audio):    # проверка на то , есть ли выпуск или нет
     podcast = execute('SELECT id_podcast FROM podcasts WHERE title_podcast = %(p)s', title_podcast)
@@ -135,57 +142,58 @@ def check_item(title_item, title_podcast, audio):    # проверка на т�
                         'title_audio = %(p)s AND audio = %(p)s', id_podcast, title_item, audio))
 
 
-def set_new_item(title_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio,
-                 duration_audio, category_item, subcategory_item, keyword_item):
-
-    id_podcast = execute('SELECT id_podcast FROM podcasts WHERE title_podcast = %(p)s', title_podcast)[0].get('id_podcast')
-    if not duration_audio:  # if детектит пустую строку, а None - нет
-        duration_audio = None
-    if not image_audio:
-        image_audio = None
-    if not pubdata_audio:
-        pubdata_audio = None
-    if not description_audio:
-        description_audio = None
-    if not audio:
-        audio = None
-
-    try:
-        execute('INSERT INTO items (id_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio, duration_audio)'
-                ' VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', id_podcast, title_audio, description_audio, audio, image_audio,
-                pubdata_audio, duration_audio, commit=True)
-    except IndexError:
-        print('Ошибка, не коммитит')
-        return
-
-    id_item = execute('SELECT id_item FROM items WHERE title_audio = %(p)s '
-                      'AND id_podcast = %(p)s', title_audio, id_podcast)[0].get('id_item')
-
-    for each_category in category_item[:-1]:
-        if each_category:
-            execute('INSERT INTO cat_item(id_item, title_category) '
-                    'VALUES (%(p)s, %(p)s)', id_item, each_category,
-                    commit=True)
-
-    for each_subcategory in subcategory_item[:-1]:
-        if each_subcategory:
-            execute('INSERT INTO subcat_item(id_item, title_subcategory) '
-                    'VALUES (%(p)s, %(p)s)', id_item, each_subcategory,
-                    commit=True)
-
-    for each_keyword in keyword_item[:-1]:
-        if each_keyword:
-            each_keyword = each_keyword.lower()
-            keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s', each_keyword)
-            
-            if not keyword:
-                execute('INSERT INTO keywords_items (title_keyword) VALUES (%(p)s)', each_keyword, commit=True)
-                id_keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s',
-                                            each_keyword)[0].get('id_keyword_item')
-            else:
-                id_keyword = keyword[0].get('id_keyword_item')
-            execute('INSERT INTO items_with_keywords (id_item, id_keyword) VALUES (%(p)s, %(p)s)',
-                    id_item, id_keyword, commit=True)
+# def set_new_item(title_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio,
+#                  duration_audio, category_item, subcategory_item, keyword_item):
+#
+#     id_podcast = execute('SELECT id_podcast FROM podcasts WHERE title_podcast = %(p)s', title_podcast)[0].get('id_podcast')
+#     if not duration_audio:  # if детектит пустую строку, а None - нет
+#         duration_audio = None
+#     if not image_audio:
+#         image_audio = None
+#     if not pubdata_audio:
+#         pubdata_audio = None
+#     if not description_audio:
+#         description_audio = None
+#     if not audio:
+#         audio = None
+#
+#     try:
+#         execute('INSERT INTO items (id_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio, duration_audio)'
+#                 ' VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', id_podcast, title_audio, description_audio, audio, image_audio,
+#                 pubdata_audio, duration_audio, commit=True)
+#     except IndexError:
+#         print('Ошибка, не коммитит')
+#         return
+#
+#     return
+#     id_item = execute('SELECT id_item FROM items WHERE title_audio = %(p)s '
+#                       'AND id_podcast = %(p)s', title_audio, id_podcast)[0].get('id_item')
+#
+#     for each_category in category_item[:-1]:
+#         if each_category:
+#             execute('INSERT INTO cat_item(id_item, title_category) '
+#                     'VALUES (%(p)s, %(p)s)', id_item, each_category,
+#                     commit=True)
+#
+#     for each_subcategory in subcategory_item[:-1]:
+#         if each_subcategory:
+#             execute('INSERT INTO subcat_item(id_item, title_subcategory) '
+#                     'VALUES (%(p)s, %(p)s)', id_item, each_subcategory,
+#                     commit=True)
+#
+#     for each_keyword in keyword_item[:-1]:
+#         if each_keyword:
+#             each_keyword = each_keyword.lower()
+#             keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s', each_keyword)
+#
+#             if not keyword:
+#                 execute('INSERT INTO keywords_items (title_keyword) VALUES (%(p)s)', each_keyword, commit=True)
+#                 id_keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s',
+#                                             each_keyword)[0].get('id_keyword_item')
+#             else:
+#                 id_keyword = keyword[0].get('id_keyword_item')
+#             execute('INSERT INTO items_with_keywords (id_item, id_keyword) VALUES (%(p)s, %(p)s)',
+#                     id_item, id_keyword, commit=True)
 
 
 def change_status(url_podcast, status):
@@ -217,3 +225,40 @@ def add_url_in_error_links(url, reason):
     execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', url, commit=True)
     if not execute('SELECT * FROM error_links WHERE (%(p)s)', url):
         execute('INSERT INTO error_links (url, reason) VALUES (%(p)s, %(p)s)', url, reason, commit=True)
+
+
+def set_new_item(id_of_podcast, list_of_items):
+    """
+        Функция которая добавляет в БД сразу несколько выпусков.
+    :param id_of_podcast:       айди подкаста, полученный раннее, к нему и будет привязаны выпуски
+    :param list_of_items:       список выпусков которые будут добавленны в бд
+    :return:                    возвращаем все айди добавленных выпусков
+    """
+
+    query = 'INSERT INTO items (id_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio, duration_audio) ' \
+            'VALUES '       # строка на дополнение к запросу
+
+    for item in list_of_items:
+        title, description, image, duration, pubdata, audio = item[:-3]     # именуем все полученные элементы (чтоб с ними было удобней работать)
+
+        if not description:  # if детектит пустую строку, а None - нет
+            description = None
+        if not image:
+            image = None
+        if not duration:
+            duration = None
+        if not pubdata:
+            pubdata = None
+        if not audio:
+            audio = None
+
+        if title.find('"') > -1:
+            title = title.replace('"', '""')
+        if description.find('"') > -1:
+            description = description.replace('"', '""')
+        query += f'({id_of_podcast}, "{title}", "{description}", "{audio}", "{image}", "{pubdata}", "{duration}"), '
+    else:
+        query = query[:-2]
+
+    execute(query, commit=True)     # 0:00:00.013001
+
