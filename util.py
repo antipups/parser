@@ -198,10 +198,10 @@ def change_url(new_url, old_url):
         execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', old_url, commit=True)
 
 
-def add_url_in_error_links(url):
+def add_url_in_error_links(url, reason):
     """
         Добавляем url в таблицу error link, и удаляем её из основной
     """
     execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', url, commit=True)
     if not execute('SELECT * FROM error_links WHERE (%(p)s)', url):
-        execute('INSERT INTO error_links (url) VALUES (%(p)s)', url, commit=True)
+        execute('INSERT INTO error_links (url, reason) VALUES (%(p)s, %(p)s)', url, reason, commit=True)

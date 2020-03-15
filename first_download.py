@@ -39,7 +39,7 @@ def parse(each_podcast):
     each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
                                 + each_podcast).text[12:-2].replace('\/', '/')
     if each_podcast.startswith('valid URL'):    # если юрл / рсс поломанные
-        util.add_url_in_error_links(old_url)
+        util.add_url_in_error_links(old_url, reason='Не валидный юрл / рсс')
         return
     elif each_podcast.startswith('L appears to ') is False:     # если всё норм с РСС лентой (если изначально её ввели)
         util.change_url(each_podcast, old_url)
@@ -51,13 +51,17 @@ def parse(each_podcast):
         html = requests.get(each_podcast).text
     except requests.exceptions.MissingSchema:
         print('ERROR PARSE -- ' + each_podcast)
-        util.add_url_in_error_links(old_url)
+        util.add_url_in_error_links(old_url, reason='Ошибка из-за того что нет коннекта к рсс.')
         return
     except requests.exceptions.SSLError:    # если сайт плохой (заразный тип)
         html = requests.get(each_podcast, verify=False).text
     except requests.exceptions.InvalidSchema:   # если нет доступа по какой-то причине, в основном из-за страны
         print('Нет коннекта - ', old_url)
-        util.add_url_in_error_links(old_url)
+        util.add_url_in_error_links(old_url, reason='Нет доступа по причине, страны или чего-то подобного')
+        return
+
+    if html.find('feeds.feedburner') > -1:
+        util.add_url_in_error_links(old_url, reason='Плохая рсс лента (с рекламой и прочим)')
         return
 
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
