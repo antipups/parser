@@ -239,7 +239,7 @@ def set_new_item(id_of_podcast, list_of_items):
             'VALUES '       # строка на дополнение к запросу
 
     for item in list_of_items:
-        title, description, image, duration, pubdata, audio = item[:-3]     # именуем все полученные элементы (чтоб с ними было удобней работать)
+        title, description, image, duration, pubdata, audio = item[:-1]     # именуем все полученные элементы (чтоб с ними было удобней работать)
 
         if not description:  # if детектит пустую строку, а None - нет
             description = None
@@ -254,11 +254,27 @@ def set_new_item(id_of_podcast, list_of_items):
 
         if title.find('"') > -1:
             title = title.replace('"', '""')
-        if description.find('"') > -1:
+        if description and description.find('"') > -1:
             description = description.replace('"', '""')
-        query += f'({id_of_podcast}, "{title}", "{description}", "{audio}", "{image}", "{pubdata}", "{duration}"), '
+        query += '({}, "{}", "{}", "{}", "{}", "{}", "{}"), '.format(id_of_podcast, title, description, audio, image, pubdata, duration)
     else:
         query = query[:-2]
 
-    execute(query, commit=True)     # 0:00:00.013001
+    cursor = connect().cursor()         # открываемванльный коннекшин
+    # execute(query, commit=True)       # пуллим в бд все выпуски
+    cursor.execute(query)
+    connect().commit()
+    # connect().close()
+
+    ids = tuple(row.get('id_item') for row in execute('SELECT id_item FROM items WHERE id_podcast = %(p)s', id_of_podcast))
+
+    for item in enumerate(list_of_items):
+        # далее вставляем категории / ключ слова / подкатегории
+        # if item[1][-1]:
+        #     query_for_category = 'INSERT INTO cat_item(id_item, title_category) VALUES '
+        #     query_for_category += '({}, "'.format(ids[item[0]]) + '"), ({}, "'.format(ids[item[0]]).join(item[1][-1]) + '")'
+        #     print(query_for_category)
+
+        print(item[1][-1])
+
 

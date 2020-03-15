@@ -123,7 +123,6 @@ def parse(each_podcast):
     html = html[html.find('<item>'):]   # обрезаем весь html до item
     amount_item = 0  # кол-во выпусков, качаем не более 50
     list_of_items = list()
-    time = list()
     while html.find('<item>') > -1 and amount_item < 50:    # до тех пор пока находим новый выпуск
         amount_item += 1
         # получаем блок с этим itemом, чтоб работать не по всей странице
@@ -167,32 +166,22 @@ def parse(each_podcast):
             temp_code = re.search(r'href=[^\"\']*(\"|\')[^\"|\']*', temp_code).group()
             image_item = temp_code[temp_code.find(re.search(r'\"|\'', temp_code).group()) + 1:]
 
-        categorys_item, subcategorys_item = func_for_clear_text.parse_category(item_code[:item_code.find('</item>')])
+        # categorys_item, subcategorys_item = func_for_clear_text.parse_category(item_code[:item_code.find('</item>')])
 
         # находим ключевые слова если они есть
         keyword_item = str()
         if item_code.find('keywords>') > -1:  # если есть ключевые слова
             keyword_item = func_for_clear_text.parse_keywords(item_code[:item_code.find('</item>')])
 
-        start = datetime.now()
-        util.set_new_item(title_podcast, title_item, description_item, mp3, image_item,
-                          pubdata_item, duration_item, categorys_item, subcategorys_item, keyword_item)
+        # util.set_new_item(title_podcast, title_item, description_item, mp3, image_item,
+        #                   pubdata_item, duration_item, categorys_item, subcategorys_item, keyword_item)
 
-        time.append(datetime.now() - start)
-        # list_of_items.append((title_item, description_item, mp3, image_item,
-        #                       pubdata_item, duration_item, categorys_item, subcategorys_item, keyword_item))
+        list_of_items.append((title_item, description_item, mp3, image_item,
+                              pubdata_item, duration_item, keyword_item))
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
 
-    # util.set_new_item(id_of_podcast, list_of_items)
-    summ = None
-    for i in time:
-        if summ is None:
-            summ = i
-        else:
-            summ += i
-    print(summ)
+    util.set_new_item(id_of_podcast, list_of_items)
 
 
 if __name__ == '__main__':
     pre_parse()
-    # parse('https://podcasts.apple.com/ru/podcast/a-r-bhat/id1373046661')
