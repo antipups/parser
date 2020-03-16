@@ -68,7 +68,7 @@ def parse(each_podcast, id_podcasts):
         return
 
     if html.find('feeds.feedburner') > -1 or re.search(r'<script[^>]*', html):
-        util.add_url_in_error_links(old_url, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
+        util.add_url_in_error_links(each_podcast, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
         return
 
     if html.find(' >') > -1:
@@ -199,10 +199,3 @@ def parse(each_podcast, id_podcasts):
 
 if __name__ == '__main__':
     pre_parse()
-    # parse('https://tpair.org/feed/podcast')
-    # parse('https://web-standards.ru/podcast/feed/')
-    # parse('https://podster.fm/rss.xml?pid=686')
-    # while threading.active_count() > 0:
-    #     print(threading.active_count())
-    # else:
-    #     print('кончил')

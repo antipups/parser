@@ -105,18 +105,39 @@ def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podc
 
         cursor.execute(query_for_connect_all_categorys[:-2])
         connect().commit()
+        connect().close()
 
-    for each_subcategory in subcat_podcast:   # добавляем подкатегории к подкасту
-        if each_subcategory:   # во время срезки выходит пустая строка, доп проверка на неё
-            subcat = execute('SELECT * FROM subcat_podcast WHERE title_subcat = (%(p)s)', each_subcategory)
-            if not subcat:
-                execute('INSERT INTO subcat_podcast (title_subcat) VALUES (%(p)s)', each_subcategory, commit=True)
-                id_subcat = execute('SELECT * FROM subcat_podcast WHERE title_subcat = (%(p)s)', each_subcategory)[0].get('id_subcat')
-            else:
-                id_subcat = subcat[0].get('id_subcat')
+    if len(subcat_podcast[:-1]) > 0:
+        new_subcat = list()
+        for subcat in subcat_podcast[:-1]:
+            if new_subcat.count(subcat) == 0 and subcat.startswith('http') is False and subcat.find('<') == -1:
+                new_subcat.append(subcat)
 
-            execute('INSERT INTO podcast_with_subcat(id_podcast, id_subcat) VALUES (%(p)s, %(p)s)',
-                    id_new_podcast, id_subcat, commit=True)
+        query_for_get_subcat = 'SELECT * ' \
+                               'FROM subcat_podcast ' \
+                               'WHERE ' + 'title_subcat IN ("' + '", "'.join(new_subcat) + '")'
+
+        subcat_already_exist = tuple(execute(query_for_get_subcat))     # получаем все подкатегории которые уже есть в бд
+        uniq_subcat = tuple(subcat for subcat in new_subcat if subcat not in tuple(row.get('title_subcat') for row in subcat_already_exist))
+        # print(new_subcat, uniq_subcat, subcat_already_exist, '=====================================')
+
+        cursor = connect().cursor()
+        if uniq_subcat:
+            cursor.execute('INSERT INTO subcat_podcast (title_subcat) VALUES ("' + '"), ("'.join(uniq_subcat) + '")')
+            connect().commit()
+            query_for_get_subcat = 'SELECT * ' \
+                                   'FROM subcat_podcast ' \
+                                   'WHERE ' + 'title_subcat IN ("' + '", "'.join(uniq_subcat) + '")'
+
+            subcat_already_exist += tuple(execute(query_for_get_subcat))
+
+        query_for_connect_all_subcat = 'INSERT INTO podcast_with_subcat (id_podcast, id_subcat) VALUES '
+        for id_subcat in tuple(id_subcat for id_subcat in tuple(row.get('id_subcat') for row in subcat_already_exist)):
+            query_for_connect_all_subcat += '(' + str(id_new_podcast) + ', ' + str(id_subcat) + '), '
+
+        cursor.execute(query_for_connect_all_subcat[:-2])
+        connect().commit()
+        connect().close()
 
     for each_keyword in keyword_podcast[:-1]:  # тот же алгоритм что и с категориями
         if each_keyword:
@@ -135,7 +156,7 @@ def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podc
                            id_new_podcast, id_keyword):
                 execute('INSERT INTO podcasts_with_keywords (id_podcast, id_keyword) VALUES (%(p)s, %(p)s)',
                         id_new_podcast, id_keyword, commit=True)
-
+    # connect().close()
     return id_new_podcast
 
 
