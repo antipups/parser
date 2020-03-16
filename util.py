@@ -1,5 +1,3 @@
-import datetime
-
 import pymysql.cursors
 import config
 
@@ -49,22 +47,18 @@ def execute(sql, *args, commit=False):
         return ans
 
 
-def check_new_podcast():
-    return execute('SELECT * FROM url_podcasts')
+#   получаем все подкасты одного статуса
+get_podcast_url = lambda status: execute('SELECT * FROM url_podcasts WHERE status_podcast = %(p)s', status)
 
 
-def get_new_podcast_url():
-    return execute('SELECT * FROM url_podcasts WHERE status_podcast=1')
+# существует ли с таким id подкаст
+exist_channel = lambda id_channel: execute('SELECT id_podcast FROM podcasts WHERE id_podcast= %(p)s', id_channel)
 
 
-def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_podcast,
+def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podcasts, category_podcast,
                     url_image_podcast, author_podcast, subcat_podcast, keyword_podcast):
 
     change_status(url_podcast, 2)     # меняем статус на статус полной докачки
-
-    # получаем id нового подкаста для скачки тегов и категорий
-    id_new_podcast = execute('SELECT id FROM url_podcasts WHERE url_podcast = %(p)s',
-                             url_podcast)[0].get('id')
 
     warning = False
     if not description_podcasts:
@@ -78,8 +72,10 @@ def set_new_podcast(url_podcast, title_podcast, description_podcasts, category_p
     execute('INSERT INTO podcasts (title_podcast, description_podcast, url_image_podcast, author_podcast, id_podcast, warning) '  # добавляем новый подкаст
             'VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', title_podcast, description_podcasts, url_image_podcast, author_podcast, id_new_podcast, warning,
             commit=True)
-
     # проходимся по всем категориям, если такой нет записываем в категории, и соединяем с подкастом, иначе просто соединяем с подкастом
+
+    #sql =  SELECT * FROM ... WHERE title_category IN (СЮДА СПИСОК ВСЕХ КАТЕГОРИЙ ЧЕРЕЗ ЗАПЯТУЮ)
+    # for data in sql удаляем категории из списка и потом их инзертим списком
     for each_category in category_podcast[:-1]:
         if each_category:
             if each_category.startswith('http'):
@@ -142,60 +138,6 @@ def check_item(title_item, title_podcast, audio):    # проверка на т�
                         'title_audio = %(p)s AND audio = %(p)s', id_podcast, title_item, audio))
 
 
-# def set_new_item(title_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio,
-#                  duration_audio, category_item, subcategory_item, keyword_item):
-#
-#     id_podcast = execute('SELECT id_podcast FROM podcasts WHERE title_podcast = %(p)s', title_podcast)[0].get('id_podcast')
-#     if not duration_audio:  # if детектит пустую строку, а None - нет
-#         duration_audio = None
-#     if not image_audio:
-#         image_audio = None
-#     if not pubdata_audio:
-#         pubdata_audio = None
-#     if not description_audio:
-#         description_audio = None
-#     if not audio:
-#         audio = None
-#
-#     try:
-#         execute('INSERT INTO items (id_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio, duration_audio)'
-#                 ' VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', id_podcast, title_audio, description_audio, audio, image_audio,
-#                 pubdata_audio, duration_audio, commit=True)
-#     except IndexError:
-#         print('Ошибка, не коммитит')
-#         return
-#
-#     return
-#     id_item = execute('SELECT id_item FROM items WHERE title_audio = %(p)s '
-#                       'AND id_podcast = %(p)s', title_audio, id_podcast)[0].get('id_item')
-#
-#     for each_category in category_item[:-1]:
-#         if each_category:
-#             execute('INSERT INTO cat_item(id_item, title_category) '
-#                     'VALUES (%(p)s, %(p)s)', id_item, each_category,
-#                     commit=True)
-#
-#     for each_subcategory in subcategory_item[:-1]:
-#         if each_subcategory:
-#             execute('INSERT INTO subcat_item(id_item, title_subcategory) '
-#                     'VALUES (%(p)s, %(p)s)', id_item, each_subcategory,
-#                     commit=True)
-#
-#     for each_keyword in keyword_item[:-1]:
-#         if each_keyword:
-#             each_keyword = each_keyword.lower()
-#             keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s', each_keyword)
-#
-#             if not keyword:
-#                 execute('INSERT INTO keywords_items (title_keyword) VALUES (%(p)s)', each_keyword, commit=True)
-#                 id_keyword = execute('SELECT id_keyword_item FROM keywords_items WHERE title_keyword = %(p)s',
-#                                             each_keyword)[0].get('id_keyword_item')
-#             else:
-#                 id_keyword = keyword[0].get('id_keyword_item')
-#             execute('INSERT INTO items_with_keywords (id_item, id_keyword) VALUES (%(p)s, %(p)s)',
-#                     id_item, id_keyword, commit=True)
-
-
 def change_status(url_podcast, status):
     """
         Меняем статус подкаста, передаем:
@@ -218,7 +160,7 @@ def change_url(new_url, old_url):
         execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', old_url, commit=True)
 
 
-def add_url_in_error_links(url, reason):
+def add_url_in_error_links(url, reason=None):
     """
         Добавляем url в таблицу error link, и удаляем её из основной
     """
@@ -256,9 +198,13 @@ def set_new_item(id_of_podcast, list_of_items):
     else:
         query = query[:-2]
 
-    cursor = connect().cursor()         # открываемванльный коннекшин
-    cursor.execute(query)
-    connect().commit()
+    try:
+        cursor = connect().cursor()         # открываемванльный коннекшин
+        cursor.execute(query)
+        connect().commit()
+
+    except Exception as e:
+        print('Error in sql syntax', e)
 
     ids = tuple(row.get('id_item') for row in execute('SELECT id_item FROM items WHERE id_podcast = %(p)s', id_of_podcast))     # id-шники выпусков
 
@@ -275,8 +221,12 @@ def set_new_item(id_of_podcast, list_of_items):
     query_for_insert_keywords += '"), ("'.join(uniq_words) + '"), ("'   # создаем запрос только с НОВЫМИ словами
 
     if len(query_for_insert_keywords) > 52:     # если ключевые слова есть
-        cursor.execute(query_for_insert_keywords[:-4])
-        connect().commit()
+        try:
+            cursor.execute(query_for_insert_keywords[:-4])
+            connect().commit()
+        except Exception as e:
+            print('Error')
+            return
 
     ids_of_new_words = {row.get('title_keyword'): row.get('id_keyword_item') for row in execute(query_for_get)}  # айди всех новых слов
     query_for_connect_all = 'INSERT INTO items_with_keywords (id_item, id_keyword ) VALUES '
@@ -290,4 +240,3 @@ def set_new_item(id_of_podcast, list_of_items):
         connect().commit()
 
     connect().close()
-

@@ -1,3 +1,4 @@
+#!/home/tgpodcast/venv/bin/python
 import re
 import time
 from datetime import datetime
@@ -13,22 +14,26 @@ def pre_parse():
         Фукнкция которая парсит все url'ы с бд, и под каждый url выделяет поток, после чего парсит
         с url'a инфу.
     """
-    for each_podcast in util.get_new_podcast_url():  # проходимся по ВСЕМ подкастам
-        if each_podcast.get('status_podcast') == 1:  # если подкаст не скачан ещё
-            if not each_podcast.get('url_podcast').startswith('http'):   # если нет http / https - на помойку
-                util.add_url_in_error_links(each_podcast.get('url_podcast'))
-                continue
-            try:
-                while threading.active_count() > 50:
-                    time.sleep(1)
-                else:
-                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'),)).start()  # ебашим всё в потоки
-                    # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
-            except requests.exceptions.ConnectionError:
-                util.add_url_in_error_links(each_podcast.get('url_podcast'))
+    for each_podcast in util.get_podcast_url(1):  # проходимся по подкастам c id 1
+        if not each_podcast.get('url_podcast').startswith('http'):   # если нет http / https - на помойку
+            util.add_url_in_error_links(each_podcast.get('url_podcast'), reason='Ссылка без http/https')
+            continue
+        try:
+            while threading.active_count() > 50:
+                print('Sleep 1 sec')
+                time.sleep(1)
+            else:
+                print('id url: ', each_podcast['id'])
+
+                if not util.exist_channel(each_podcast.get('id')):
+                    print('start url:   ', each_podcast.get('url_podcast'))
+                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast['id'])).start()  # ебашим всё в потоки
+                # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
+        except requests.exceptions.ConnectionError:
+            util.add_url_in_error_links(each_podcast.get('url_podcast'))
 
 
-def parse(each_podcast):
+def parse(each_podcast, id_podcasts):
     """
             Вначале закачиваю инфу о подкасте, название, и прочее;
         После благодаря циклу парсим выпуски, если что кол-во выпусков задано на
@@ -111,8 +116,12 @@ def parse(each_podcast):
     # находим категории если они есть
     categorys_podcast, subcategorys_podcast = func_for_clear_text.parse_category(pre_item_html)
 
-    id_of_podcast = util.set_new_podcast(each_podcast, title_podcast, description_podcast, categorys_podcast,
-                                         image_podcasts, author_podcast, subcategorys_podcast, keyword_podcasts)
+    print('##############################################################')
+    print('Link ', each_podcast)
+    print('Name chanel: ' + title_podcast + '\n')
+    
+    util.set_new_podcast(id_podcasts, each_podcast, title_podcast, description_podcast, categorys_podcast,
+                         image_podcasts, author_podcast, subcategorys_podcast, keyword_podcasts)
 
     """
         Далее идем к выпускам подкаста, именуется этот тег(в плане сам выпуск) в rss как item, 
@@ -179,13 +188,15 @@ def parse(each_podcast):
         list_of_items.append((title_item, description_item, mp3, image_item,
                               pubdata_item, duration_item, keyword_item))
         html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
-    util.set_new_item(id_of_podcast, list_of_items)
+        print('Название выпуска: ' + title_item + '\n')
+
+    util.set_new_item(id_podcasts, list_of_items)
 
 
 
 if __name__ == '__main__':
-    # pre_parse()
-    parse('https://tpair.org/feed/podcast')
+    pre_parse()
+    # parse('https://tpair.org/feed/podcast')
     # parse('https://web-standards.ru/podcast/feed/')
     # parse('https://podster.fm/rss.xml?pid=686')
     # while threading.active_count() > 0:
