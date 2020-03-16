@@ -202,41 +202,50 @@ def set_new_item(id_of_podcast, list_of_items):
         cursor = connect().cursor()         # открываемванльный коннекшин
         cursor.execute(query)
         connect().commit()
-
     except Exception as e:
-        print('Error in sql syntax', e)
+        print('Назакомитились выпуски.', e)
+        connect().close()
+        return
 
     ids = tuple(row.get('id_item') for row in execute('SELECT id_item FROM items WHERE id_podcast = %(p)s', id_of_podcast))     # id-шники выпусков
 
     query_for_insert_keywords = 'INSERT INTO keywords_items (title_keyword) VALUES ("'
-    new_words = set()
+    keywords_used_in_items = tuple()
     for keywords in tuple(item[-1] for item in list_of_items):  # генерируем ключ слова без повторений
-        new_words = new_words.union(set(keywords))
+        keywords_used_in_items += tuple(keyword for keyword in keywords if keywords_used_in_items.count(keyword) == 0)
 
+    # запрос на получени всех ВОЗМОЖНЫХ слов которые есть в выпуске и есть в бд, по ним же потом и будем отсекать лишнее
     query_for_get = 'SELECT * ' \
                     'FROM ' \
-                    'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(new_words) + '"'
+                    'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(keywords_used_in_items) + '"'
 
-    uniq_words = new_words.difference(set(row.get('title_keyword') for row in execute(query_for_get)))      # получаем слова которых НЕТ в бд то есть новые
-    query_for_insert_keywords += '"), ("'.join(uniq_words) + '"), ("'   # создаем запрос только с НОВЫМИ словами
+    keywords_already_in_db = tuple(row for row in execute(query_for_get))
+    uniq_words = tuple(keyword for keyword in keywords_used_in_items if keyword not in tuple(row.get('title_keyword') for row in keywords_already_in_db))      # получаем слова которых НЕТ в бд то есть новые
 
-    if len(query_for_insert_keywords) > 52:     # если ключевые слова есть
+    if uniq_words:  # если уникальные слова всё-таки есть
+        query_for_insert_keywords += '"), ("'.join(uniq_words) + '"), ("'   # создаем запрос только с НОВЫМИ словами
         try:
             cursor.execute(query_for_insert_keywords[:-4])
             connect().commit()
         except Exception as e:
-            print('Error')
+            print('Ошибка в инсерте ключевых слов.')
+            connect().close()   # если вдруг что-то пошло не так, ОБЯЗАТЕЛЬНО ЗАКРЫВАЕМ конекшин
             return
+        # запрос на получение айди только НОВЫХ ключ. слов, то есть тех которые были добавленны благодаря новым выпускам
+        query_for_get = 'SELECT * ' \
+                        'FROM ' \
+                        'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(uniq_words) + '"'
+        keywords_already_in_db += tuple(execute(query_for_get))
 
-    ids_of_new_words = {row.get('title_keyword'): row.get('id_keyword_item') for row in execute(query_for_get)}  # айди всех новых слов
+    ids_of_new_words = {row.get('title_keyword'): row.get('id_keyword_item') for row in keywords_already_in_db}  # айди всех новых слов
     query_for_connect_all = 'INSERT INTO items_with_keywords (id_item, id_keyword ) VALUES '
     for item in enumerate(list_of_items):   #
         if item[1][-1]:
             tuple_with_id_keywords = tuple(str(ids_of_new_words.get(keyword)) for keyword in item[1][-1])    # генерируем по словам айдишники
             query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
 
-    if len(query_for_connect_all) > 62:
-        cursor.execute(query_for_connect_all[:-2])
-        connect().commit()
+    # if len(query_for_connect_all) > 62:   # если вдруг будет вылетать ошибка
+    cursor.execute(query_for_connect_all[:-2])
+    connect().commit()
 
     connect().close()
