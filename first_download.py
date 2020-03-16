@@ -67,7 +67,7 @@ def parse(each_podcast, id_podcasts):
         util.add_url_in_error_links(old_url, reason='Нет доступа по причине, страны или чего-то подобного')
         return
 
-    if html.find('feeds.feedburner') > -1 or re.search(r'<script[^>]*', html):
+    if html.find('feeds.feedburner') > -1 or re.search(r'<script[^>]*', html) or each_podcast.startswith('unes error'):
         util.add_url_in_error_links(each_podcast, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
         return
 
@@ -194,7 +194,6 @@ def parse(each_podcast, id_podcasts):
         print('Название выпуска: ' + title_item + '\n')
 
     util.set_new_item(id_podcasts, list_of_items)
-
 
 
 if __name__ == '__main__':

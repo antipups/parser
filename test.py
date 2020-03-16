@@ -26,6 +26,7 @@ if __name__ == '__main__':
     util.execute('TRUNCATE cat_item', commit=True)
     util.execute('TRUNCATE url_podcasts', commit=True)
     # parse('https://tpair.org/feed/podcast')
+    # parse('https://feeds.transistor.fm/ea66dac5-1865-4459-bc12-5bd84aef1857')
     with open('parse_link.txt', 'r') as f:
         for i in enumerate(f.readlines()):
             # if i[0] < 100:

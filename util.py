@@ -74,8 +74,6 @@ def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podc
             commit=True)
     # проходимся по всем категориям, если такой нет записываем в категории, и соединяем с подкастом, иначе просто соединяем с подкастом
 
-    #sql =  SELECT * FROM ... WHERE title_category IN (СЮДА СПИСОК ВСЕХ КАТЕГОРИЙ ЧЕРЕЗ ЗАПЯТУЮ)
-    # for data in sql удаляем категории из списка и потом их инзертим списком
     if len(category_podcast[:-1]) > 0:
         new_categorys = list()
         for category in category_podcast[:-1]:
@@ -139,24 +137,39 @@ def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podc
         connect().commit()
         connect().close()
 
-    for each_keyword in keyword_podcast[:-1]:  # тот же алгоритм что и с категориями
-        if each_keyword:
-            each_keyword = each_keyword.lower()
-            keyword = execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s', each_keyword)
+    if len(keyword_podcast[:-1]) > 0:
+        new_keyword = list()
+        if keyword_podcast[-1] == '':
+            keyword_podcast = keyword_podcast[:-1]
+        for keyword in keyword_podcast:
+            if new_keyword.count(keyword) == 0 and keyword.startswith('http') is False:
+                new_keyword.append(keyword)
 
-            if not keyword:
+        query_for_get_keyword = 'SELECT * ' \
+                                'FROM keywords ' \
+                                'WHERE ' + 'title_keyword IN ("' + '", "'.join(new_keyword) + "\")"
 
-                execute('INSERT INTO keywords (title_keyword) VALUES (%(p)s)', each_keyword, commit=True)
-                id_keyword = execute('SELECT id_keyword FROM keywords WHERE title_keyword = %(p)s',
-                                            each_keyword)[0].get('id_keyword')
-            else:
-                id_keyword = keyword[0].get('id_keyword')
+        keywords_already_exist = tuple(execute(query_for_get_keyword))
+        uniq_keywords = tuple(keyword for keyword in new_keyword if keyword not in tuple(row.get('title_keyword') for row in keywords_already_exist))
+        cursor = connect().cursor()
 
-            if not execute('SELECT * FROM podcasts_with_keywords WHERE id_podcast = %(p)s AND id_keyword = %(p)s',
-                           id_new_podcast, id_keyword):
-                execute('INSERT INTO podcasts_with_keywords (id_podcast, id_keyword) VALUES (%(p)s, %(p)s)',
-                        id_new_podcast, id_keyword, commit=True)
-    # connect().close()
+        if uniq_keywords:
+            cursor.execute('INSERT INTO keywords (title_keyword) VALUES ("' + '"), ("'.join(uniq_keywords) + '")')
+            connect().commit()
+            query_for_get_keyword = 'SELECT * ' \
+                                    'FROM keywords ' \
+                                    'WHERE ' + 'title_keyword IN ("' + '", "'.join(uniq_keywords) + '")'
+
+            keywords_already_exist += tuple(execute(query_for_get_keyword))
+
+        query_for_connect_all_keyword = 'INSERT INTO podcasts_with_keywords (id_podcast, id_keyword) VALUES '
+        for id_keyword in tuple(id_keyword for id_keyword in tuple(row.get('id_keyword') for row in keywords_already_exist)):
+            query_for_connect_all_keyword += '(' + str(id_new_podcast) + ', ' + str(id_keyword) + '), '
+
+        cursor.execute(query_for_connect_all_keyword[:-2])
+        connect().commit()
+        connect().close()
+
     return id_new_podcast
 
 
