@@ -76,25 +76,35 @@ def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podc
 
     #sql =  SELECT * FROM ... WHERE title_category IN (СЮДА СПИСОК ВСЕХ КАТЕГОРИЙ ЧЕРЕЗ ЗАПЯТУЮ)
     # for data in sql удаляем категории из списка и потом их инзертим списком
-    for each_category in category_podcast[:-1]:
-        if each_category:
-            if each_category.startswith('http'):
-                continue
+    if len(category_podcast[:-1]) > 0:
+        new_categorys = list()
+        for category in category_podcast[:-1]:
+            if new_categorys.count(category) == 0 and category.startswith('http') is False:
+                new_categorys.append(category)
 
-            category = execute('SELECT id_category FROM categorys WHERE title_category = %(p)s', each_category)
-            if not category:
-                execute('INSERT INTO categorys(title_category, ru_title) VALUES (%(p)s, %(p)s)', each_category, each_category, commit=True)   # если нет такой категории, создаем
-                id_category = execute('SELECT id_category FROM categorys '
-                                      'WHERE title_category = %(p)s',
-                                       each_category)[0].get('id_category')  # находим новую категорию и записываем её
-            else:
-                id_category = category[0].get('id_category')
+        query_for_get_category = 'SELECT * ' \
+                                 'FROM categorys ' \
+                                 'WHERE ' + 'title_category IN ("' + '", "'.join(new_categorys) + "\")"
 
-            if not execute('SELECT * FROM podcasts_with_categorys WHERE id_podcast = %(p)s AND id_category = %(p)s',    # если данной связки ещё нет
-                           id_new_podcast, id_category):
+        categorys_already_exist = tuple(execute(query_for_get_category))
+        uniq_categorys = tuple(category for category in new_categorys if category not in tuple(row.get('title_category') for row in categorys_already_exist))
+        cursor = connect().cursor()
+        if uniq_categorys:
+            values = tuple((x, x) for x in uniq_categorys).__str__().replace('\'', '\"')[1:-1] if len(uniq_categorys) > 1 else tuple((x, x) for x in uniq_categorys).__str__().replace('\'', '\"')[1:-2]
+            cursor.execute('INSERT INTO categorys (title_category, ru_title) VALUES ' + values)
+            connect().commit()
+            query_for_get_category = 'SELECT * ' \
+                                     'FROM categorys ' \
+                                     'WHERE ' + 'title_category IN ("' + '", "'.join(uniq_categorys) + "\")"
+            categorys_already_exist += tuple(execute(query_for_get_category))
 
-                execute('INSERT INTO podcasts_with_categorys(id_category, id_podcast) VALUES (%(p)s, %(p)s)',
-                        id_category, id_new_podcast, commit=True)
+        query_for_connect_all_categorys = 'INSERT INTO podcasts_with_categorys (id_podcast, id_category) VALUES '
+
+        for id_category in tuple(row.get('id_category') for row in categorys_already_exist):
+            query_for_connect_all_categorys += '(' + str(id_new_podcast) + ', ' + str(id_category) + '), '
+
+        cursor.execute(query_for_connect_all_categorys[:-2])
+        connect().commit()
 
     for each_subcategory in subcat_podcast:   # добавляем подкатегории к подкасту
         if each_subcategory:   # во время срезки выходит пустая строка, доп проверка на неё
@@ -209,43 +219,51 @@ def set_new_item(id_of_podcast, list_of_items):
 
     ids = tuple(row.get('id_item') for row in execute('SELECT id_item FROM items WHERE id_podcast = %(p)s', id_of_podcast))     # id-шники выпусков
 
-    query_for_insert_keywords = 'INSERT INTO keywords_items (title_keyword) VALUES ("'
     keywords_used_in_items = tuple()
     for keywords in tuple(item[-1] for item in list_of_items):  # генерируем ключ слова без повторений
-        keywords_used_in_items += tuple(keyword for keyword in keywords if keywords_used_in_items.count(keyword) == 0)
+        keywords_used_in_items += tuple(set(keyword for keyword in keywords if keywords_used_in_items.count(keyword) == 0))
 
     # запрос на получени всех ВОЗМОЖНЫХ слов которые есть в выпуске и есть в бд, по ним же потом и будем отсекать лишнее
     query_for_get = 'SELECT * ' \
-                    'FROM ' \
-                    'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(keywords_used_in_items) + '"'
+                    'FROM keywords_items ' \
+                    'WHERE ' + 'title_keyword IN ("' + '", "'.join(keywords_used_in_items) + '")'
 
-    keywords_already_in_db = tuple(row for row in execute(query_for_get))
-    uniq_words = tuple(keyword for keyword in keywords_used_in_items if keyword not in tuple(row.get('title_keyword') for row in keywords_already_in_db))      # получаем слова которых НЕТ в бд то есть новые
+    try:
+        keywords_already_in_db = tuple(execute(query_for_get))
+    except Exception as e:
+        print(e)
+        connect().close()
+    else:
+        uniq_words = tuple(keyword for keyword in keywords_used_in_items if keyword not in tuple(row.get('title_keyword') for row in keywords_already_in_db))      # получаем слова которых НЕТ в бд то есть новые
 
-    if uniq_words:  # если уникальные слова всё-таки есть
-        query_for_insert_keywords += '"), ("'.join(uniq_words) + '"), ("'   # создаем запрос только с НОВЫМИ словами
-        try:
-            cursor.execute(query_for_insert_keywords[:-4])
-            connect().commit()
-        except Exception as e:
-            print('Ошибка в инсерте ключевых слов.')
-            connect().close()   # если вдруг что-то пошло не так, ОБЯЗАТЕЛЬНО ЗАКРЫВАЕМ конекшин
-            return
-        # запрос на получение айди только НОВЫХ ключ. слов, то есть тех которые были добавленны благодаря новым выпускам
-        query_for_get = 'SELECT * ' \
-                        'FROM ' \
-                        'keywords_items WHERE ' + 'title_keyword = "' + '" OR title_keyword = "'.join(uniq_words) + '"'
-        keywords_already_in_db += tuple(execute(query_for_get))
+        if uniq_words:  # если уникальные слова всё-таки есть
+            try:
+                cursor.execute(str('INSERT INTO keywords_items (title_keyword) VALUES ("' + '"), ("'.join(uniq_words) + '"), ("')[:-4])
+                connect().commit()
+            except Exception as e:
+                print('Ошибка в инсерте ключевых слов.')
+                connect().close()   # если вдруг что-то пошло не так, ОБЯЗАТЕЛЬНО ЗАКРЫВАЕМ конекшин
+                return
+            # запрос на получение айди только НОВЫХ ключ. слов, то есть тех которые были добавленны благодаря новым выпускам
+            query_for_get = 'SELECT * ' \
+                            'FROM keywords_items ' \
+                            'WHERE ' + 'title_keyword IN ("' + '", "'.join(uniq_words) + '")'
+            keywords_already_in_db += tuple(execute(query_for_get))
 
-    ids_of_new_words = {row.get('title_keyword'): row.get('id_keyword_item') for row in keywords_already_in_db}  # айди всех новых слов
-    query_for_connect_all = 'INSERT INTO items_with_keywords (id_item, id_keyword ) VALUES '
-    for item in enumerate(list_of_items):   #
-        if item[1][-1]:
-            tuple_with_id_keywords = tuple(str(ids_of_new_words.get(keyword)) for keyword in item[1][-1])    # генерируем по словам айдишники
-            query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
+        ids_of_new_words = {row.get('title_keyword'): row.get('id_keyword_item') for row in keywords_already_in_db}  # айди всех новых слов
+        query_for_connect_all = 'INSERT INTO items_with_keywords (id_item, id_keyword ) VALUES '
+        for item in enumerate(list_of_items):   #
+            if item[1][-1]:
+                tuple_with_id_keywords = tuple(str(ids_of_new_words.get(keyword)) for keyword in item[1][-1])    # генерируем по словам айдишники
+                query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
 
-    # if len(query_for_connect_all) > 62:   # если вдруг будет вылетать ошибка
-    cursor.execute(query_for_connect_all[:-2])
-    connect().commit()
+        if len(query_for_connect_all[:-2]) != 60:   # если вдруг будет вылетать ошибка
+            try:
+                cursor.execute(query_for_connect_all[:-2])
+            except Exception as e:
+                print(e)
+                connect().close()
+            else:
+                connect().commit()
 
-    connect().close()
+        connect().close()

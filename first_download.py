@@ -73,7 +73,10 @@ def parse(each_podcast, id_podcasts):
 
     if html.find(' >') > -1:
         for tag in re.findall(r'<.*\s>', html):
-            html = re.sub(tag, tag[:-2] + tag[-1], html)
+            try:
+                html = re.sub(tag, tag[:-2] + tag[-1], html)
+            except:
+                continue
 
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
@@ -165,7 +168,7 @@ def parse(each_podcast, id_podcasts):
             duration_item = temp_code[:temp_code.find('</')]     # получаем длительность аудио
             if duration_item.startswith('<![CDATA'):
                 duration_item = duration_item[9:-3]
-            if duration_item and duration_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
+            if duration_item and duration_item.isalnum() and duration_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
                 duration_item = func_for_clear_text.convert_time(int(duration_item))
 
         # получаем картинку выпуска если такова есть
