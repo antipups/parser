@@ -29,10 +29,13 @@ if __name__ == '__main__':
     # parse('https://tpair.org/feed/podcast')
     # parse('https://feeds.transistor.fm/ea66dac5-1865-4459-bc12-5bd84aef1857')
     # parse('https://vk.com/podcasts-165932116.rss')
-    with open('parse_link.txt', 'r') as f:
-        for i in enumerate(f.readlines()):
+    # parse('https://podcasts.apple.com/ru/podcast/all-ears-a-podcast-all-things-disney/id1191379571')
+    # parse('https://podcasts.apple.com/ru/podcast/aledaata/id1498635912')
+    # parse('https://podcasts.apple.com/ru/podcast/alecradio/id1397406873')
+    # with open('parse_link.txt', 'r') as f:
+    #     for i in enumerate(f.readlines()):
             # if i[0] < 100:
-            parse(i[1])
+            # parse(i[1])
             # else:
             #     break
     # parse('http://feeds.soundcloud.com/users/soundcloud:users:538507779/sounds.rss')

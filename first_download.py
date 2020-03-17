@@ -61,7 +61,7 @@ def parse(each_podcast, id_podcasts):
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
     except requests.exceptions.MissingSchema:
-        print('ERROR PARSE -- ' + each_podcast)
+        print('ERROR PARSE -- ' + old_url)
         util.add_url_in_error_links(id_podcasts, old_url, reason='Ошибка из-за того что нет коннекта к рсс.')
         return
     except requests.exceptions.SSLError:    # если сайт плохой (заразный тип)
@@ -178,15 +178,19 @@ def parse(each_podcast, id_podcasts):
             duration_item = temp_code[:temp_code.find('</')]     # получаем длительность аудио
             if duration_item.startswith('<![CDATA'):
                 duration_item = duration_item[9:-3]
-            if duration_item and duration_item.isalnum() and duration_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
+            if duration_item and duration_item.isdigit() and duration_item.find(':') == -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
                 duration_item = func_for_clear_text.convert_time(int(duration_item))
 
         # получаем картинку выпуска если такова есть
         image_item = str()
         if item_code.find('image ') > -1 and item_code.find('"image"') == -1:
             temp_code = item_code[item_code.find('image ') + 6:]
-            temp_code = re.search(r'href=[^\"\']*(\"|\')[^\"|\']*', temp_code).group()
-            image_item = temp_code[temp_code.find(re.search(r'\"|\'', temp_code).group()) + 1:]
+            temp_code = re.search(r'href=[^\"\']*(\"|\')[^\"|\']*', temp_code)
+            if temp_code:
+                temp_code = temp_code.group()
+                image_item = temp_code[temp_code.find(re.search(r'\"|\'', temp_code).group()) + 1:]
+            else:
+                image_item = str()
 
         # categorys_item, subcategorys_item = func_for_clear_text.parse_category(item_code[:item_code.find('</item>')])
 

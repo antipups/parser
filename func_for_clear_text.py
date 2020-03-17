@@ -89,9 +89,13 @@ def parse_description(html):
 def clear_pubdata(string):
     dict_day = {'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06',
                    'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'}
-    if string[1] == ' ':    # для нормального времени (2 -> 02)
-        string = '0' + string[0] + ' ' + string[2:]
-    month = re.search(r'\w\w\w', string).group()
+    try:
+        if string[1] == ' ':    # для нормального времени (2 -> 02)
+            string = '0' + string[0] + ' ' + string[2:]
+    except Exception as e:
+        return None
+    month = re.search(r'\w\w\w', string)
+    month = month.group() if month else None
     if dict_day.get(month) is None:
         return None
     string = re.sub(month, dict_day.get(month), string)  # запуливаем вместо названия месяца номер месяца
