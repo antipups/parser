@@ -16,7 +16,7 @@ def pre_parse():
     """
     for each_podcast in util.get_podcast_url(1):  # проходимся по подкастам c id 1
         if not each_podcast.get('url_podcast').startswith('http'):   # если нет http / https - на помойку
-            util.add_url_in_error_links(each_podcast.get('url_podcast'), reason='Ссылка без http/https')
+            util.add_url_in_error_links(each_podcast.get('id'), each_podcast.get('url_podcast'), reason='Ссылка без http/https')
             continue
         try:
             while threading.active_count() > 50:
@@ -27,7 +27,7 @@ def pre_parse():
 
                 if not util.exist_channel(each_podcast.get('id')):
                     print('start url:   ', each_podcast.get('url_podcast'))
-                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast['id'])).start()  # ебашим всё в потоки
+                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
                 # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
         except requests.exceptions.ConnectionError:
             util.add_url_in_error_links(each_podcast.get('url_podcast'))
@@ -46,32 +46,40 @@ def parse(each_podcast, id_podcasts):
     each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
                                 + each_podcast).text[12:-2].replace('\/', '/')
     if each_podcast.startswith('valid URL'):    # если юрл / рсс поломанные
-        util.add_url_in_error_links(old_url, reason='Не валидный юрл / рсс')
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Не валидный юрл / рсс')
         return
-    elif each_podcast.startswith('L appears to ') is False:     # если всё норм с РСС лентой (если изначально её ввели)
-        util.change_url(each_podcast, old_url)
+    elif each_podcast.startswith('unes error:'):
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Не доступен в стор в какой-то стране')
+        return
     else:   # если всё нормально, то есть была ссылка на айтунс, стала на рсс
-        each_podcast = old_url
+        if each_podcast.startswith('L appears to ') is True:    # если ссылька не изменена
+            each_podcast = old_url
     try:
+        if requests.get(each_podcast).status_code != 200:
+            raise requests.exceptions.ConnectionError
         html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
     except requests.exceptions.MissingSchema:
         print('ERROR PARSE -- ' + each_podcast)
-        util.add_url_in_error_links(old_url, reason='Ошибка из-за того что нет коннекта к рсс.')
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Ошибка из-за того что нет коннекта к рсс.')
         return
     except requests.exceptions.SSLError:    # если сайт плохой (заразный тип)
         html = requests.get(each_podcast, verify=False).text
+    except requests.exceptions.ConnectionError:
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Ошибка коннекта к сайту(404 или 503)')
+        return
     except requests.exceptions.InvalidSchema:   # если нет доступа по какой-то причине, в основном из-за страны
         print('Нет коннекта - ', old_url)
-        util.add_url_in_error_links(old_url, reason='Нет доступа по причине, страны или чего-то подобного')
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Нет доступа по причине, страны или чего-то подобного')
         return
 
     if html.find('feeds.feedburner') > -1 or re.search(r'<script[^>]*', html) or each_podcast.startswith('unes error'):
-        util.add_url_in_error_links(each_podcast, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
+        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
         return
 
-    # util.change_url(old_url, each_podcast, 2)
+    # заносим в бд изменение (если ссылки не изменны, то меняем только статус)
+    util.change_url(id_podcasts, each_podcast, 2)
 
     if html.find(' >') > -1:
         for tag in re.findall(r'<.*\s>', html):
@@ -90,7 +98,8 @@ def parse(each_podcast, id_podcasts):
         title_podcast = title_podcast[title_podcast.find('>') + 1:title_podcast.rfind('</')]
         title_podcast = func_for_clear_text.check_on_shit(title_podcast)  # название пригодится при парсинге выпусков
     else:
-        util.add_url_in_error_links(old_url, reason='Некорректная рсс лента.')
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Некорректная рсс лента.')
+    print(title_podcast)
 
     # находим описание подкаста
     description_podcast = None

@@ -191,23 +191,25 @@ def check_item(title_item, title_podcast, audio):    # проверка на т�
     #         status,  url_podcast, commit=True)
 
 
-def change_url(new_url, old_url):
+def change_url(id_podcast, new_url, status):
     """
         Меняем юрл подкаста, если вдруг он с apple podcast
     """
 
-    if not execute('SELECT * FROM url_podcasts WHERE url_podcast = %(p)s', new_url):
-        execute('UPDATE url_podcasts SET url_podcast = %(p)s WHERE url_podcast = %(p)s',
-                new_url, old_url, commit=True)
+    if (not execute('SELECT * FROM url_podcasts WHERE url_podcast = %(p)s', new_url)) and (not execute('SELECT * FROM temp_table WHERE new_url = %(p)s', new_url)):
+        execute('INSERT INTO temp_table (id, new_url, status) VALUES (%(p)s, %(p)s, %(p)s)', id_podcast, new_url, status, commit=True)
     else:
-        execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', old_url, commit=True)
+        execute('INSERT INTO temp_table (id, status) VALUES (%(p)s, %(p)s)', new_url, -1, commit=True)
 
 
-def add_url_in_error_links(url, reason):
+def add_url_in_error_links(id_podcast, url, reason):
     """
-        Добавляем url в ВРЕМЕННУЮ таблицу, а после срабатывает крон и т.д.
+        Добавляем запись в временную таблицу;
+        Добавляем урл в таблицу с ошибками.
     """
-    execute('INSERT INTO temp_table (old_url, reason) VALUES (%(p)s, %(p)s)', url, reason, commit=True)
+    execute('INSERT INTO temp_table (id, new_url, status) VALUES (%(p)s, %(p)s, %(p)s)', id_podcast,  url, -1, commit=True)
+    if not execute('SELECT * FROM error_links WHERE id = (%(p)s)', id_podcast):
+        execute('INSERT INTO error_links (url, id, reason) VALUES (%(p)s, %(p)s, %(p)s)', url, id_podcast, reason, commit=True)
 
 
 def set_new_item(id_of_podcast, list_of_items):

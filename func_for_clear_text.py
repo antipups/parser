@@ -10,19 +10,22 @@ def check_on_shit(string):      # чистим полученные строки
     return string
 
 
-def encode_from_html(string):   # перекодировка из html символов в обычные
-    while re.search(r'&#\w?\d{1,4};', string) is not None:     # чистим от цифр, заменяя буквами если вохможно (&#1044;)
-        swap_word = re.search(r'&#\w?\d{1,4};', string).group()    # копируем изменяемое слово
-        if swap_word[-5:-1].isdigit() is False	or len(swap_word) != 7 or not 1040 <= int(swap_word[-5:-1]) <= 1103:  # все слова которые не буквы, меняем на пробел
-            new_word = ' '
-        else:
-            new_word = chr(int(re.search(swap_word, string).group()[-5:-1]))
-        string = re.sub(swap_word, new_word, string)
+def encode_from_html(string):   # перекодировка из html символов в обычные, бекап в коммитах
+    if re.search(r'&#x[\d\w]{1,4};', string) is not None:   # если вдруг попалась 16-ичная система
+        for word in re.findall(r'&#[\d\w]{1,4};', string):
+            string = re.sub(word, chr(int(word[-4:-1], 16)), string)
+
+    if re.search(r'&#\d{1,4};', string) is not None:
+        for word in re.findall(r'&#\d{1,4};', string):
+            string = re.sub(word, chr(int(word[-5:-1], 10)), string)
 
     if re.search(r'&lt;|&gt;|quot;|&amp;', string):
         string = string.replace('&lt;', '<').replace('&gt;', '>').replace('&quot;', '"').replace('&amp;', '&')
-    while re.search(r'&[^;]{1,8};', string) is not None:  # чистим от кода на буквах (&amp;)
-        string = re.sub(re.search(r'&[^;]{1,8};', string).group(), '', string)
+
+    if re.search(r'&[^;]{1,8};', string) is not None:  # чистим от кода на буквах (&amp;)
+        for word in re.findall(r'&[^;]{1,8};', string):
+            string = re.sub(word, '', string)
+
     return string
 
 
