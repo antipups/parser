@@ -99,7 +99,6 @@ def parse(each_podcast, id_podcasts):
         title_podcast = func_for_clear_text.check_on_shit(title_podcast)  # название пригодится при парсинге выпусков
     else:
         util.add_url_in_error_links(id_podcasts, old_url, reason='Некорректная рсс лента.')
-    print(title_podcast)
 
     # находим описание подкаста
     description_podcast = None
