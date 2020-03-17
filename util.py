@@ -58,8 +58,6 @@ exist_channel = lambda id_channel: execute('SELECT id_podcast FROM podcasts WHER
 def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podcasts, category_podcast,
                     url_image_podcast, author_podcast, subcat_podcast, keyword_podcast):
 
-    change_status(url_podcast, 2)     # меняем статус на статус полной докачки
-
     warning = False
     if not description_podcasts:
         description_podcasts = 'NULL'
@@ -182,21 +180,22 @@ def check_item(title_item, title_podcast, audio):    # проверка на т�
                         'title_audio = %(p)s AND audio = %(p)s', id_podcast, title_item, audio))
 
 
-def change_status(url_podcast, status):
-    """
-        Меняем статус подкаста, передаем:
-            1 - если нужна начальная инфа;
-            2 - если нужна полная докачка;
-            3 - если нужна докачкка последних выпусков
-    """
-    execute('UPDATE url_podcasts SET status_podcast = %(p)s WHERE url_podcast = %(p)s',
-            status,  url_podcast, commit=True)
+# def change_status(url_podcast, status):
+#     """
+#         Меняем статус подкаста, передаем:
+#             1 - если нужна начальная инфа;
+#             2 - если нужна полная докачка;
+#             3 - если нужна докачкка последних выпусков
+#     """
+    # execute('UPDATE url_podcasts SET status_podcast = %(p)s WHERE url_podcast = %(p)s',
+    #         status,  url_podcast, commit=True)
 
 
 def change_url(new_url, old_url):
     """
         Меняем юрл подкаста, если вдруг он с apple podcast
     """
+
     if not execute('SELECT * FROM url_podcasts WHERE url_podcast = %(p)s', new_url):
         execute('UPDATE url_podcasts SET url_podcast = %(p)s WHERE url_podcast = %(p)s',
                 new_url, old_url, commit=True)
@@ -204,13 +203,11 @@ def change_url(new_url, old_url):
         execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', old_url, commit=True)
 
 
-def add_url_in_error_links(url, reason=None):
+def add_url_in_error_links(url, reason):
     """
-        Добавляем url в таблицу error link, и удаляем её из основной
+        Добавляем url в ВРЕМЕННУЮ таблицу, а после срабатывает крон и т.д.
     """
-    execute('DELETE FROM url_podcasts WHERE url_podcast = %(p)s', url, commit=True)
-    if not execute('SELECT * FROM error_links WHERE (%(p)s)', url):
-        execute('INSERT INTO error_links (url, reason) VALUES (%(p)s, %(p)s)', url, reason, commit=True)
+    execute('INSERT INTO temp_table (old_url, reason) VALUES (%(p)s, %(p)s)', url, reason, commit=True)
 
 
 def set_new_item(id_of_podcast, list_of_items):

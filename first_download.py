@@ -71,6 +71,8 @@ def parse(each_podcast, id_podcasts):
         util.add_url_in_error_links(each_podcast, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
         return
 
+    # util.change_url(old_url, each_podcast, 2)
+
     if html.find(' >') > -1:
         for tag in re.findall(r'<.*\s>', html):
             try:
