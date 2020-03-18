@@ -99,9 +99,13 @@ def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podc
         for id_category in tuple(row.get('id_category') for row in categorys_already_exist):
             query_for_connect_all_categorys += '(' + str(id_new_podcast) + ', ' + str(id_category) + '), '
 
-        cursor.execute(query_for_connect_all_categorys[:-2])
-        connect().commit()
-        connect().close()
+        try:
+            cursor.execute(query_for_connect_all_categorys[:-2])
+            connect().commit()
+        except:
+            print('Ошибка связи подкаста с категориями.')
+        finally:
+            connect().close()
 
     if len(subcat_podcast[:-1]) > 0:
         new_subcat = list()

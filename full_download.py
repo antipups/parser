@@ -55,7 +55,7 @@ def parse(each_podcast, id_podcasts):
         util.add_url_in_error_links(id_podcasts, each_podcast, reason='Нет доступа по причине, страны или чего-то подобного')
         return
 
-    util.change_url(id_podcasts, each_podcast, 2)
+    util.change_url(id_podcasts, each_podcast, 3)
 
     if html.find(' >') > -1:
         for tag in re.findall(r'<.*\s>', html):
