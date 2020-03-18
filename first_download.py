@@ -135,7 +135,7 @@ def parse(each_podcast, id_podcasts):
     print('Link ', each_podcast)
     print('Name chanel: ' + title_podcast + '\n')
     
-    util.set_new_podcast(id_podcasts, each_podcast, title_podcast, description_podcast, categorys_podcast,
+    util.set_new_podcast(id_podcasts, title_podcast, description_podcast, categorys_podcast,
                          image_podcasts, author_podcast, subcategorys_podcast, keyword_podcasts)
 
     """
