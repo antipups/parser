@@ -168,27 +168,12 @@ def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podc
         connect().commit()
         connect().close()
 
-    return id_new_podcast
 
-
-def check_item(title_item, title_podcast, audio):    # проверка на то , есть ли выпуск или нет
-    podcast = execute('SELECT id_podcast FROM podcasts WHERE title_podcast = %(p)s', title_podcast)
-    if not podcast:
-        return False
-    id_podcast = podcast[0].get('id_podcast')
-    return bool(execute('SELECT title_audio FROM items WHERE id_podcast = %(p)s AND '
-                        'title_audio = %(p)s AND audio = %(p)s', id_podcast, title_item, audio))
-
-
-# def change_status(url_podcast, status):
-#     """
-#         Меняем статус подкаста, передаем:
-#             1 - если нужна начальная инфа;
-#             2 - если нужна полная докачка;
-#             3 - если нужна докачкка последних выпусков
-#     """
-    # execute('UPDATE url_podcasts SET status_podcast = %(p)s WHERE url_podcast = %(p)s',
-    #         status,  url_podcast, commit=True)
+def check_item(id_podcast, audio):    # проверка на то , есть ли выпуск или нет
+    return bool(execute('SELECT title_audio '
+                        'FROM items '
+                        'WHERE id_podcast = %(p)s '
+                        '   AND audio = %(p)s', id_podcast, audio))
 
 
 def change_url(id_podcast, new_url, status):
@@ -197,9 +182,9 @@ def change_url(id_podcast, new_url, status):
     """
 
     if (not execute('SELECT * FROM url_podcasts WHERE url_podcast = %(p)s', new_url)) and (not execute('SELECT * FROM temp_table WHERE new_url = %(p)s', new_url)):
-        execute('INSERT INTO temp_table (id, new_url, status) VALUES (%(p)s, %(p)s, %(p)s)', id_podcast, new_url, status, commit=True)
+        execute('INSERT INTO temp_table (new_url, status, id) VALUES (%(p)s, %(p)s, %(p)s)', new_url, status, id_podcast, commit=True)
     else:
-        execute('INSERT INTO temp_table (id, status) VALUES (%(p)s, %(p)s)', new_url, -1, commit=True)
+        execute('INSERT INTO temp_table (status, id) VALUES (%(p)s, %(p)s)', -1, new_url,  commit=True)
 
 
 def add_url_in_error_links(id_podcast, url, reason):
@@ -207,7 +192,7 @@ def add_url_in_error_links(id_podcast, url, reason):
         Добавляем запись в временную таблицу;
         Добавляем урл в таблицу с ошибками.
     """
-    execute('INSERT INTO temp_table (id, new_url, status) VALUES (%(p)s, %(p)s, %(p)s)', id_podcast,  url, -1, commit=True)
+    execute('INSERT INTO temp_table (new_url, status, id) VALUES (%(p)s, %(p)s, %(p)s)', url, -1 , id_podcast, commit=True)
     if not execute('SELECT * FROM error_links WHERE id = (%(p)s)', id_podcast):
         execute('INSERT INTO error_links (url, id, reason) VALUES (%(p)s, %(p)s, %(p)s)', url, id_podcast, reason, commit=True)
 
@@ -246,7 +231,7 @@ def set_new_item(id_of_podcast, list_of_items):
         cursor.execute(query)
         connect().commit()
     except Exception as e:
-        print('Назакомитились выпуски.', e)
+        print('Назакомитились выпуски.')
         connect().close()
         return
 
@@ -294,7 +279,7 @@ def set_new_item(id_of_podcast, list_of_items):
             try:
                 cursor.execute(query_for_connect_all[:-2])
             except Exception as e:
-                print(e)
+                print('Проблема в коннекте ключ. слов и выпуска.')
                 connect().close()
             else:
                 connect().commit()

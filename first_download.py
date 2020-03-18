@@ -19,7 +19,7 @@ def pre_parse():
             util.add_url_in_error_links(each_podcast.get('id'), each_podcast.get('url_podcast'), reason='Ссылка без http/https')
             continue
         try:
-            while threading.active_count() > 50:
+            while threading.active_count() > 30:
                 print('Sleep 1 sec')
                 time.sleep(1)
             else:
@@ -74,7 +74,7 @@ def parse(each_podcast, id_podcasts):
         util.add_url_in_error_links(id_podcasts, old_url, reason='Нет доступа по причине, страны или чего-то подобного')
         return
 
-    if html.find('feeds.feedburner') > -1 or re.search(r'<script[^>]*', html) or each_podcast.startswith('unes error'):
+    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or re.search(r'<script[^>]*', html) or each_podcast.startswith('unes error'):
         util.add_url_in_error_links(id_podcasts, each_podcast, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
         return
 
@@ -91,12 +91,14 @@ def parse(each_podcast, id_podcasts):
     pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
 
     # находим название подкаста
-    pre_title = re.search(r'<title[^>]*>[^<]*</title>', pre_item_html)
+    pre_title = re.search(r'<title.*>.*</title>', pre_item_html)
     title_podcast = str()
     if pre_title:   # если тайтл есть, но рсска пока норм, иначе в помойку
         title_podcast = pre_title.group()
         title_podcast = title_podcast[title_podcast.find('>') + 1:title_podcast.rfind('</')]
         title_podcast = func_for_clear_text.check_on_shit(title_podcast)  # название пригодится при парсинге выпусков
+        if len(title_podcast) > 120:
+            title_podcast = str()
     else:
         util.add_url_in_error_links(id_podcasts, old_url, reason='Некорректная рсс лента.')
 

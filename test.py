@@ -26,6 +26,8 @@ if __name__ == '__main__':
     util.execute('TRUNCATE cat_item', commit=True)
     util.execute('TRUNCATE url_podcasts', commit=True)
     util.execute('TRUNCATE temp_table', commit=True)
+    # parse('https://librivox.org/rss/7668')
+    # parse('http://bewealthyandsmart.libsyn.com/rss')
     # parse('https://tpair.org/feed/podcast')
     # parse('https://feeds.transistor.fm/ea66dac5-1865-4459-bc12-5bd84aef1857')
     # parse('https://vk.com/podcasts-165932116.rss')
