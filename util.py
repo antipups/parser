@@ -55,10 +55,12 @@ get_podcast_url = lambda status: execute('SELECT * FROM url_podcasts WHERE statu
 exist_channel = lambda id_channel: execute('SELECT id_podcast FROM podcasts WHERE id_podcast= %(p)s', id_channel)
 
 
-def set_new_podcast(id_new_podcast, url_podcast, title_podcast, description_podcasts, category_podcast,
+def set_new_podcast(id_new_podcast, title_podcast, description_podcasts, category_podcast,
                     url_image_podcast, author_podcast, subcat_podcast, keyword_podcast):
 
     warning = False
+    if not title_podcast:
+        title_podcast = 'NULL'
     if not description_podcasts:
         description_podcasts = 'NULL'
     if not url_image_podcast:
