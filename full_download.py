@@ -38,21 +38,26 @@ def parse(each_podcast, id_podcasts):
     try:
         if requests.get(each_podcast).status_code != 200:
             raise requests.exceptions.ConnectionError
-        html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
+        try:
+            html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
+        except Exception as e:
+            print(e)
+            util.add_url_in_error_links(each_podcast.get('url_podcast'), reason='Ureal connect closed port 443')
+
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
     except requests.exceptions.MissingSchema:
         print('ERROR PARSE -- ' + each_podcast)
-        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Ошибка из-за того что нет коннекта к рсс.')
+        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Cant connected on rss')
         return
     except requests.exceptions.SSLError:  # если сайт плохой (заразный тип)
         html = requests.get(each_podcast, verify=False).text
     except requests.exceptions.ConnectionError:
-        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Ошибка коннекта к сайту(404 или 503)')
+        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Error (404 or 503)')
         return
     except requests.exceptions.InvalidSchema:  # если нет доступа по какой-то причине, в основном из-за страны
         print('Нет коннекта - ', each_podcast)
-        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Нет доступа по причине, страны или чего-то подобного')
+        util.add_url_in_error_links(id_podcasts, each_podcast, reason='No access to iTunes from Russia')
         return
 
     util.change_url(id_podcasts, each_podcast, 3)
@@ -96,18 +101,25 @@ def parse(each_podcast, id_podcasts):
         # получаем дату публикации выпуска
         pubdata_item = func_for_clear_text.clear_pubdata(
             item_code[item_code.find('<pubDate>') + 14: item_code.find('</pubDate>') - 6])
+        if pubdata_item and pubdata_item.isdigit() is False:
+            pubdata_item = str()
 
         # получаем область с длительностью аудио
         duration_item = str()
-        duration_code = re.search(r'duration[^>]*>', item_code)  # для обхода плохо написанного тега
+        duration_code = re.search(r'duration>', item_code)  # для обхода плохо написанного тега
         if duration_code:
             temp_code = item_code[item_code.find(duration_code.group()) + len(duration_code.group()):]
             duration_item = temp_code[:temp_code.find('</')]  # получаем длительность аудио
             if duration_item.startswith('<![CDATA'):
                 duration_item = duration_item[9:-3]
-            if duration_item and duration_item.isdigit() and duration_item.find(
-                    ':') == -1:  # проверяем разделено ли время : (иначе оно указано в секундах)
-                duration_item = func_for_clear_text.convert_time(int(duration_item))
+            tuple_for_check = tuple(str(x) for x in range(0, 10)) + (':',)
+            for symbol in duration_item:
+                if symbol not in tuple_for_check:
+                    duration_item = str()
+                    break
+            else:
+                if duration_item and duration_item.isdigit() and duration_item.find(':') != -1:  # проверяем разделено ли время : (иначе оно указано в секундах)
+                    duration_item = func_for_clear_text.convert_time(int(duration_item))
 
         # получаем картинку выпуска если такова есть
         image_item = str()
@@ -120,15 +132,10 @@ def parse(each_podcast, id_podcasts):
             else:
                 image_item = str()
 
-        # categorys_item, subcategorys_item = func_for_clear_text.parse_category(item_code[:item_code.find('</item>')])
-
         # находим ключевые слова если они есть
         keyword_item = str()
         if item_code.find('keywords>') > -1:  # если есть ключевые слова
             keyword_item = func_for_clear_text.parse_keywords(item_code[:item_code.find('</item>')])
-
-        # util.set_new_item(title_podcast, title_item, description_item, mp3, image_item,
-        #                   pubdata_item, duration_item, categorys_item, subcategorys_item, keyword_item)
 
         list_of_items.append((title_item, description_item, mp3, image_item,
                               pubdata_item, duration_item, keyword_item))

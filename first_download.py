@@ -83,8 +83,7 @@ def parse(each_podcast, id_podcasts):
         util.add_url_in_error_links(id_podcasts, old_url, reason='No access to iTunes from Russia')
         return
 
-    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(
-            re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
+    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
         util.add_url_in_error_links(id_podcasts, each_podcast,
                                     reason='Bad rss')
         return
@@ -200,8 +199,7 @@ def parse(each_podcast, id_podcasts):
                     duration_item = str()
                     break
             else:
-                if duration_item and duration_item.isdigit() and duration_item.find(
-                        ':') != -1:  # проверяем разделено ли время : (иначе оно указано в секундах)
+                if duration_item and duration_item.isdigit() and duration_item.find(':') != -1:  # проверяем разделено ли время : (иначе оно указано в секундах)
                     duration_item = func_for_clear_text.convert_time(int(duration_item))
 
         # получаем картинку выпуска если такова есть
