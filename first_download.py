@@ -15,8 +15,9 @@ def pre_parse():
         с url'a инфу.
     """
     for each_podcast in util.get_podcast_url(1):  # проходимся по подкастам c id 1
-        if not each_podcast.get('url_podcast').startswith('http'):   # если нет http / https - на помойку
-            util.add_url_in_error_links(each_podcast.get('id'), each_podcast.get('url_podcast'), reason='Ссылка без http/https')
+        if not each_podcast.get('url_podcast').startswith('http'):  # если нет http / https - на помойку
+            util.add_url_in_error_links(each_podcast.get('id'), each_podcast.get('url_podcast'),
+                                        reason='Ссылка без http/https')
             continue
         try:
             while threading.active_count() > 30:
@@ -24,10 +25,13 @@ def pre_parse():
                 time.sleep(1)
             else:
                 print('id url: ', each_podcast['id'])
-
                 if not util.exist_channel(each_podcast.get('id')):
                     print('start url:   ', each_podcast.get('url_podcast'))
-                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
+                    threading.Thread(target=parse, args=(
+                    each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
+                else:
+                    util.change_status(each_podcast.get('url_podcast'), 2, each_podcast.get('id'))
+
                 # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
         except requests.exceptions.ConnectionError:
             util.add_url_in_error_links(each_podcast.get('url_podcast'))
@@ -45,37 +49,44 @@ def parse(each_podcast, id_podcasts):
     old_url = each_podcast
     each_podcast = requests.get('http://picklemonkey.net/flipper/extractor.php?feed='
                                 + each_podcast).text[12:-2].replace('\/', '/')
-    if each_podcast.startswith('valid URL'):    # если юрл / рсс поломанные
+    if each_podcast.startswith('valid URL'):  # если юрл / рсс поломанные
         util.add_url_in_error_links(id_podcasts, old_url, reason='Не валидный юрл / рсс')
         return
     elif each_podcast.startswith('unes error:'):
         util.add_url_in_error_links(id_podcasts, old_url, reason='Не доступен в стор в какой-то стране')
         return
-    else:   # если всё нормально, то есть была ссылка на айтунс, стала на рсс
-        if each_podcast.startswith('L appears to ') is True:    # если ссылька не изменена
+    else:  # если всё нормально, то есть была ссылка на айтунс, стала на рсс
+        if each_podcast.startswith('L appears to ') is True:  # если ссылька не изменена
             each_podcast = old_url
     try:
         if requests.get(each_podcast).status_code != 200:
             raise requests.exceptions.ConnectionError
-        html = requests.get(each_podcast).content.decode('utf-8')     # получаем саму ленту
+        try:
+            html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
+        except Exception as e:
+            print(e)
+            util.add_url_in_error_links(each_podcast.get('url_podcast'), reason='Ureal connect closed port 443')
+
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
     except requests.exceptions.MissingSchema:
         print('ERROR PARSE -- ' + old_url)
-        util.add_url_in_error_links(id_podcasts, old_url, reason='Ошибка из-за того что нет коннекта к рсс.')
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Cant connected on rss')
         return
-    except requests.exceptions.SSLError:    # если сайт плохой (заразный тип)
+    except requests.exceptions.SSLError:  # если сайт плохой (заразный тип)
         html = requests.get(each_podcast, verify=False).text
     except requests.exceptions.ConnectionError:
-        util.add_url_in_error_links(id_podcasts, old_url, reason='Ошибка коннекта к сайту(404 или 503)')
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Error (404 or 503)')
         return
-    except requests.exceptions.InvalidSchema:   # если нет доступа по какой-то причине, в основном из-за страны
+    except requests.exceptions.InvalidSchema:  # если нет доступа по какой-то причине, в основном из-за страны
         print('Нет коннекта - ', old_url)
-        util.add_url_in_error_links(id_podcasts, old_url, reason='Нет доступа по причине, страны или чего-то подобного')
+        util.add_url_in_error_links(id_podcasts, old_url, reason='No access to iTunes from Russia')
         return
 
-    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
-        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Плохая рсс лента (с рекламой или скриптами и прочим)')
+    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(
+            re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
+        util.add_url_in_error_links(id_podcasts, each_podcast,
+                                    reason='Bad rss')
         return
 
     # заносим в бд изменение (если ссылки не изменны, то меняем только статус)
@@ -88,12 +99,12 @@ def parse(each_podcast, id_podcasts):
             except:
                 continue
 
-    pre_item_html = html[:html.find('<item>')]      # записываем в ленте часть перед выпусками (для быстродействия?)
+    pre_item_html = html[:html.find('<item>')]  # записываем в ленте часть перед выпусками (для быстродействия?)
 
     # находим название подкаста
     pre_title = re.search(r'<title.*>.*</title>', pre_item_html)
     title_podcast = str()
-    if pre_title:   # если тайтл есть, но рсска пока норм, иначе в помойку
+    if pre_title:  # если тайтл есть, но рсска пока норм, иначе в помойку
         title_podcast = pre_title.group()
         title_podcast = title_podcast[title_podcast.find('>') + 1:title_podcast.rfind('</')]
         title_podcast = func_for_clear_text.check_on_shit(title_podcast)  # название пригодится при парсинге выпусков
@@ -119,7 +130,7 @@ def parse(each_podcast, id_podcasts):
 
     # находим ключевые слова если они есть
     keyword_podcasts = str()
-    if pre_item_html.find('keywords>') > -1:     # если есть ключевые слова
+    if pre_item_html.find('keywords>') > -1:  # если есть ключевые слова
         keyword_podcasts = func_for_clear_text.parse_keywords(pre_item_html)
 
     # находим автора, если он есть
@@ -134,7 +145,7 @@ def parse(each_podcast, id_podcasts):
     print('##############################################################')
     print('Link ', each_podcast)
     print('Name chanel: ' + title_podcast + '\n')
-    
+
     util.set_new_podcast(id_podcasts, title_podcast, description_podcast, categorys_podcast,
                          image_podcasts, author_podcast, subcategorys_podcast, keyword_podcasts)
 
@@ -144,10 +155,10 @@ def parse(each_podcast, id_podcasts):
         Имеем цикл, который ходит по этим тегам, из каждого тега выкачиваем ввсё что в нём есть.
     """
 
-    html = html[html.find('<item>'):]   # обрезаем весь html до item
+    html = html[html.find('<item>'):]  # обрезаем весь html до item
     amount_item = 0  # кол-во выпусков, качаем не более 50
     list_of_items = list()
-    while html.find('<item>') > -1 and amount_item < 50:    # до тех пор пока находим новый выпуск
+    while html.find('<item>') > -1 and amount_item < 50:  # до тех пор пока находим новый выпуск
         amount_item += 1
         # получаем блок с этим itemом, чтоб работать не по всей странице
         item_code = html[html.find('<item>') + 7: html.find('</item>')]
@@ -170,16 +181,17 @@ def parse(each_podcast, id_podcasts):
             description_item = func_for_clear_text.parse_description(item_code)
 
         # получаем дату публикации выпуска
-        pubdata_item = func_for_clear_text.clear_pubdata(item_code[item_code.find('<pubDate>') + 14: item_code.find('</pubDate>') - 6])
+        pubdata_item = func_for_clear_text.clear_pubdata(
+            item_code[item_code.find('<pubDate>') + 14: item_code.find('</pubDate>') - 6])
         if pubdata_item and pubdata_item.isdigit() is False:
             pubdata_item = str()
 
         # получаем область с длительностью аудио
         duration_item = str()
-        duration_code = re.search(r'duration>', item_code)     # для обхода плохо написанного тега
+        duration_code = re.search(r'duration>', item_code)  # для обхода плохо написанного тега
         if duration_code:
             temp_code = item_code[item_code.find(duration_code.group()) + len(duration_code.group()):]
-            duration_item = temp_code[:temp_code.find('</')]     # получаем длительность аудио
+            duration_item = temp_code[:temp_code.find('</')]  # получаем длительность аудио
             if duration_item.startswith('<![CDATA'):
                 duration_item = duration_item[9:-3]
             tuple_for_check = tuple(str(x) for x in range(0, 10)) + (':',)
@@ -188,7 +200,8 @@ def parse(each_podcast, id_podcasts):
                     duration_item = str()
                     break
             else:
-                if duration_item and duration_item.isdigit() and duration_item.find(':') != -1:     # проверяем разделено ли время : (иначе оно указано в секундах)
+                if duration_item and duration_item.isdigit() and duration_item.find(
+                        ':') != -1:  # проверяем разделено ли время : (иначе оно указано в секундах)
                     duration_item = func_for_clear_text.convert_time(int(duration_item))
 
         # получаем картинку выпуска если такова есть
@@ -209,7 +222,7 @@ def parse(each_podcast, id_podcasts):
 
         list_of_items.append((title_item, description_item, mp3, image_item,
                               pubdata_item, duration_item, keyword_item))
-        html = html[html.find('</item>') + 7:]   # режем ту строку с которой отработали, и идем далее
+        html = html[html.find('</item>') + 7:]  # режем ту строку с которой отработали, и идем далее
         print('Название выпуска: ' + title_item + '\n')
 
     util.set_new_item(id_podcasts, list_of_items)
