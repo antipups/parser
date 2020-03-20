@@ -60,14 +60,14 @@ def set_new_podcast(id_new_podcast, title_podcast, description_podcasts, categor
 
     warning = False
     if not title_podcast:
-        title_podcast = 'NULL'
+        title_podcast = None
     if not description_podcasts:
-        description_podcasts = 'NULL'
+        description_podcasts = None
     if not url_image_podcast:
-        url_image_podcast = 'NULL'
+        url_image_podcast = None
         warning = True
     if not author_podcast:
-        author_podcast = 'NULL'
+        author_podcast = None
 
     execute('INSERT INTO podcasts (title_podcast, description_podcast, url_image_podcast, author_podcast, id_podcast, warning) '  # добавляем новый подкаст
             'VALUES (%(p)s, %(p)s, %(p)s, %(p)s, %(p)s, %(p)s)', title_podcast, description_podcasts, url_image_podcast, author_podcast, id_new_podcast, warning,
@@ -190,7 +190,7 @@ def change_url(id_podcast, new_url, status):
     if (not execute('SELECT * FROM url_podcasts WHERE url_podcast = %(p)s', new_url)) and (not execute('SELECT * FROM temp_table WHERE new_url = %(p)s', new_url)):
         execute('INSERT INTO temp_table (new_url, status, id) VALUES (%(p)s, %(p)s, %(p)s)', new_url, status, id_podcast, commit=True)
     else:
-        execute('INSERT INTO temp_table (status, id) VALUES (%(p)s, %(p)s)', -1, new_url,  commit=True)
+        execute('INSERT INTO temp_table (status, id) VALUES (%(p)s, %(p)s)', -1, id_podcast,  commit=True)
 
 
 def add_url_in_error_links(id_podcast, url, reason):
@@ -232,12 +232,15 @@ def set_new_item(id_of_podcast, list_of_items):
     else:
         query = query[:-2]
 
+    if query.endswith('VALUE'):   # выпусков НЕТ АЛЛО
+        return
+
     try:
         cursor = connect().cursor()         # открываемванльный коннекшин
         cursor.execute(query)
         connect().commit()
     except Exception as e:
-        print('Назакомитились выпуски.')
+        print('Назакомитились выпуски.', id_of_podcast, e, '\n', query)
         connect().close()
         return
 
@@ -245,7 +248,7 @@ def set_new_item(id_of_podcast, list_of_items):
 
     keywords_used_in_items = tuple()
     for keywords in tuple(item[-1] for item in list_of_items):  # генерируем ключ слова без повторений
-        keywords_used_in_items += tuple(set(keyword for keyword in keywords if keywords_used_in_items.count(keyword) == 0))
+        keywords_used_in_items += tuple(set(keyword.replace('"', '""') if keyword.count('"') > 1 else keyword.replace('"', '') for keyword in keywords if keywords_used_in_items.count(keyword) == 0))
 
     # запрос на получени всех ВОЗМОЖНЫХ слов которые есть в выпуске и есть в бд, по ним же потом и будем отсекать лишнее
     query_for_get = 'SELECT * ' \
@@ -255,7 +258,6 @@ def set_new_item(id_of_podcast, list_of_items):
     try:
         keywords_already_in_db = tuple(execute(query_for_get))
     except Exception as e:
-        print(e)
         connect().close()
     else:
         uniq_words = tuple(keyword for keyword in keywords_used_in_items if keyword not in tuple(row.get('title_keyword') for row in keywords_already_in_db))      # получаем слова которых НЕТ в бд то есть новые
