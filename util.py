@@ -293,3 +293,7 @@ def set_new_item(id_of_podcast, list_of_items):
                 connect().commit()
 
         connect().close()
+
+
+def change_status(url, status, id_podcast):
+    execute('INSERT INTO temp_table (new_url, status, id) VALUES (%(p)s, %(p)s, %(p)s)', url, status, id_podcast, commit=True)
