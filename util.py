@@ -240,7 +240,7 @@ def set_new_item(id_of_podcast, list_of_items):
         cursor.execute(query)
         connect().commit()
     except Exception as e:
-        print('Назакомитились выпуски.', id_of_podcast, e, '\n', query)
+        print('Назакомитились выпуски.')
         connect().close()
         return
 
