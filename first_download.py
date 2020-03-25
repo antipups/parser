@@ -1,8 +1,9 @@
 #!/home/tgpodcast/venv/bin/python
+import multiprocessing
 import re
 import time
 from datetime import datetime
-
+from datetime import timedelta
 import func_for_clear_text
 import threading
 import requests
@@ -27,8 +28,7 @@ def pre_parse():
                 print('id url: ', each_podcast['id'])
                 if not util.exist_channel(each_podcast.get('id')):
                     print('start url:   ', each_podcast.get('url_podcast'))
-                    threading.Thread(target=parse, args=(
-                    each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
+                    threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
                 else:
                     util.change_status(each_podcast.get('url_podcast'), 2, each_podcast.get('id'))
 
@@ -59,13 +59,25 @@ def parse(each_podcast, id_podcasts):
         if each_podcast.startswith('L appears to ') is True:  # если ссылька не изменена
             each_podcast = old_url
     try:
+        # ЭТО ДЛЯ ТОГО, чтоб узнать не бракованный ли урл на время загрузки...
+        start = datetime.now()
+        Thread = multiprocessing.Process(target=requests.get, args=(each_podcast,))
+        Thread.start()
+        while Thread.is_alive() and datetime.now() - start < timedelta(seconds=60):
+            time.sleep(1)
+        else:
+            if Thread.is_alive():
+                Thread.kill()
+                util.add_url_in_error_links(id_podcasts, old_url, reason='Infinity load')
+                return
+
         if requests.get(each_podcast).status_code != 200:
             raise requests.exceptions.ConnectionError
         try:
             html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
         except Exception as e:
             print(e)
-            util.add_url_in_error_links(each_podcast.get('url_podcast'), reason='Unconnect closed port 443')
+            util.add_url_in_error_links(id_podcasts, old_url, reason='Unconnect closed port 443')
 
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
@@ -91,7 +103,6 @@ def parse(each_podcast, id_podcasts):
         print('Неизвестная ошибка', e)
         util.add_url_in_error_links(id_podcasts, old_url, reason='Unknown error')
         return
-
 
     if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
         util.add_url_in_error_links(id_podcasts, each_podcast, reason='Bad rss')

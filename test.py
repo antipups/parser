@@ -32,4 +32,5 @@ if __name__ == '__main__':
             # parse(i[1])
             # else:
             #     break
+    # parse('https://podcasts.apple.com/ru/podcast/radio2-in-the-mix/id494551291')
     parse('https://podcasts.apple.com/ru/podcast/from-the-heart/id1355054226')
