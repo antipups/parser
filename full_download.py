@@ -20,8 +20,8 @@ def pre_parse():
             else:
                 print('id url: ', each_podcast['id'])
                 print('start url:   ', each_podcast.get('url_podcast'))
-                # threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
-                parse(each_podcast.get('url_podcast'), each_podcast.get('id'))   # парсим по одному без потоков
+                threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
+                # parse(each_podcast.get('url_podcast'), each_podcast.get('id'))   # парсим по одному без потоков
         except requests.exceptions.ConnectionError:
             util.add_url_in_error_links(each_podcast.get('url_podcast'))
 

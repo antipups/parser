@@ -92,6 +92,7 @@ def set_new_podcast(id_new_podcast, title_podcast, description_podcasts, categor
         uniq_categorys = tuple(category for category in new_categorys if category not in tuple(row.get('title_category') for row in categorys_already_exist))
         cursor = connect().cursor()
         if uniq_categorys:
+            # print('КАТЕГОРИИ КОТОРЫЕ УЖЕ ЕСТЬ В БД --- ', categorys_already_exist, 'КАТЕГОРИИ КОТОРЫХ НЕТ В БД --- ', uniq_categorys)
             values = tuple((x, x) for x in uniq_categorys).__str__().replace('\'', '\"')[1:-1] if len(uniq_categorys) > 1 else tuple((x, x) for x in uniq_categorys).__str__().replace('\'', '\"')[1:-2]
             cursor.execute('INSERT INTO categorys (title_category, ru_title) VALUES ' + values)
             connect().commit()
@@ -108,8 +109,8 @@ def set_new_podcast(id_new_podcast, title_podcast, description_podcasts, categor
         try:
             cursor.execute(query_for_connect_all_categorys[:-2])
             connect().commit()
-        except:
-            print('Ошибка связи подкаста с категориями.')
+        except Exception as e:
+            print('Ошибка связи подкаста с категориями.', e, id_new_podcast)
         finally:
             connect().close()
 
@@ -258,7 +259,7 @@ def set_new_item(id_of_podcast, list_of_items):
         cursor.execute(query)
         connect().commit()
     except Exception as e:
-        print('Назакомитились выпуски.')
+        print('Назакомитились выпуски.', e, id_of_podcast)
         connect().close()
         return
 
@@ -278,6 +279,7 @@ def set_new_item(id_of_podcast, list_of_items):
     try:
         keywords_already_in_db = tuple(execute(query_for_get))
     except Exception as e:
+        print('Ошибка чтения уже слов которые есть в бд', e, id_of_podcast)
         connect().close()
     else:
         uniq_words = tuple(keyword for keyword in keywords_used_in_items if keyword not in tuple(row.get('title_keyword') for row in keywords_already_in_db))      # получаем слова которых НЕТ в бд то есть новые
@@ -288,7 +290,7 @@ def set_new_item(id_of_podcast, list_of_items):
                                    'VALUES ("' + '"), ("'.join(uniq_words) + '"), ("')[:-4])
                 connect().commit()
             except Exception as e:
-                print('Ошибка в инсерте ключевых слов.')
+                print('Ошибка в инсерте ключевых слов.', e, id_of_podcast)
                 connect().close()   # если вдруг что-то пошло не так, ОБЯЗАТЕЛЬНО ЗАКРЫВАЕМ конекшин
                 return
             # запрос на получение айди только НОВЫХ ключ. слов, то есть тех которые были добавленны благодаря новым выпускам
@@ -301,14 +303,14 @@ def set_new_item(id_of_podcast, list_of_items):
         query_for_connect_all = 'INSERT INTO items_with_keywords (id_item, id_keyword ) VALUES '
         for item in enumerate(list_of_items):   #
             if item[1][-1]:
-                tuple_with_id_keywords = tuple(str(ids_of_new_words.get(keyword)) for keyword in item[1][-1])    # генерируем по словам айдишники
+                tuple_with_id_keywords = tuple(str(ids_of_new_words.get(keyword)) for keyword in item[1][-1] if ids_of_new_words.get(keyword))    # генерируем по словам айдишники
                 query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
 
         if len(query_for_connect_all[:-2]) != 60:   # если вдруг будет вылетать ошибка
             try:
                 cursor.execute(query_for_connect_all[:-2])
             except Exception as e:
-                print('Проблема в коннекте ключ. слов и выпуска.')
+                print('Проблема в коннекте ключ. слов и выпуска.', e, id_of_podcast)
                 connect().close()
             else:
                 connect().commit()

@@ -22,12 +22,12 @@ def pre_parse():
             continue
         try:
             while threading.active_count() > 25:
-                print('Sleep 1 sec')
+                # print('Sleep 1 sec')
                 time.sleep(1)
             else:
-                print('id url: ', each_podcast['id'])
+                # print('id url: ', each_podcast['id'])
                 if not util.exist_channel(each_podcast.get('id')):
-                    print('start url:   ', each_podcast.get('url_podcast'))
+                    # print('start url:   ', each_podcast.get('url_podcast'))
                     threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
                 else:
                     util.change_status(each_podcast.get('url_podcast'), 2, each_podcast.get('id'))
@@ -52,7 +52,7 @@ def parse(each_podcast, id_podcasts):
     if each_podcast.startswith('valid URL'):  # если юрл / рсс поломанные
         util.add_url_in_error_links(id_podcasts, old_url, reason='Не валидный юрл / рсс')
         return
-    elif each_podcast.startswith('unes error:'):
+    elif each_podcast.startswith('unes error:') or each_podcast.startswith('able to proc'):
         util.add_url_in_error_links(id_podcasts, old_url, reason='Не доступен в стор в какой-то стране')
         return
     else:  # если всё нормально, то есть была ссылка на айтунс, стала на рсс
@@ -76,35 +76,35 @@ def parse(each_podcast, id_podcasts):
         try:
             html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
         except Exception as e:
-            print(e)
+            # print(e)
             util.add_url_in_error_links(id_podcasts, old_url, reason='Unconnect closed port 443')
 
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
     except requests.exceptions.MissingSchema:
-        print('ERROR PARSE -- ' + old_url)
+        # print('ERROR PARSE -- ' + old_url)
         util.add_url_in_error_links(id_podcasts, old_url, reason='Cant connected on rss')
         return
     except requests.exceptions.SSLError:  # если сайт плохой (заразный тип)
         try:
             html = requests.get(each_podcast, verify=False).text
         except Exception as e:
-            print(e)
+            # print(e)
             util.add_url_in_error_links(id_podcasts, old_url, reason='SSL error')
             return
     except requests.exceptions.ConnectionError:
         util.add_url_in_error_links(id_podcasts, old_url, reason='Error (404 or 503)')
         return
     except requests.exceptions.InvalidSchema:  # если нет доступа по какой-то причине, в основном из-за страны
-        print('Нет коннекта - ', old_url)
+        # print('Нет коннекта - ', old_url)
         util.add_url_in_error_links(id_podcasts, old_url, reason='No access to iTunes from Russia')
         return
     except Exception as e:  # если нет доступа по какой-то причине, в основном из-за страны
-        print('Неизвестная ошибка', e)
+        # print('Неизвестная ошибка', e)
         util.add_url_in_error_links(id_podcasts, old_url, reason='Unknown error')
         return
 
-    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
+    if not html or html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
         util.add_url_in_error_links(id_podcasts, each_podcast, reason='Bad rss')
         return
 
@@ -162,9 +162,9 @@ def parse(each_podcast, id_podcasts):
     # находим категории если они есть
     categorys_podcast, subcategorys_podcast = func_for_clear_text.parse_category(pre_item_html)
 
-    print('##############################################################')
-    print('Link ', each_podcast)
-    print('Name chanel: ' + title_podcast + '\n')
+    # print('##############################################################')
+    # print('Link ', each_podcast)
+    # print('Name chanel: ' + title_podcast + '\n')
 
     util.set_new_podcast(id_podcasts, title_podcast, description_podcast, categorys_podcast,
                          image_podcasts, author_podcast, subcategorys_podcast, keyword_podcasts)
@@ -242,7 +242,7 @@ def parse(each_podcast, id_podcasts):
         list_of_items.append((title_item, description_item, mp3, image_item,
                               pubdata_item, duration_item, keyword_item))
         html = html[html.find('</item>') + 7:]  # режем ту строку с которой отработали, и идем далее
-        print('Название выпуска: ' + title_item + '\n')
+        # print('Название выпуска: ' + title_item + '\n')
 
     util.set_new_item(id_podcasts, list_of_items)
 

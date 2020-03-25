@@ -33,4 +33,4 @@ if __name__ == '__main__':
             # else:
             #     break
     # parse('https://podcasts.apple.com/ru/podcast/radio2-in-the-mix/id494551291')
-    parse('https://podcasts.apple.com/ru/podcast/from-the-heart/id1355054226')
+    parse('http://aboutsf.podomatic.com/rss2.xml')
