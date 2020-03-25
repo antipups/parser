@@ -48,11 +48,15 @@ def execute(sql, *args, commit=False):
 
 
 #   получаем все подкасты одного статуса
-get_podcast_url = lambda status: execute('SELECT * FROM url_podcasts WHERE status_podcast = %(p)s', status)
+get_podcast_url = lambda status: execute('SELECT * '
+                                         'FROM url_podcasts '
+                                         'WHERE status_podcast = %(p)s', status)
 
 
 # существует ли с таким id подкаст
-exist_channel = lambda id_channel: execute('SELECT id_podcast FROM podcasts WHERE id_podcast= %(p)s', id_channel)
+exist_channel = lambda id_channel: execute('SELECT id_podcast '
+                                           'FROM podcasts '
+                                           'WHERE id_podcast= %(p)s', id_channel)
 
 
 def set_new_podcast(id_new_podcast, title_podcast, description_podcasts, category_podcast,
@@ -125,7 +129,8 @@ def set_new_podcast(id_new_podcast, title_podcast, description_podcasts, categor
 
         cursor = connect().cursor()
         if uniq_subcat:
-            cursor.execute('INSERT INTO subcat_podcast (title_subcat) VALUES ("' + '"), ("'.join(uniq_subcat) + '")')
+            cursor.execute('INSERT INTO subcat_podcast (title_subcat) '
+                           'VALUES ("' + '"), ("'.join(uniq_subcat) + '")')
             connect().commit()
             query_for_get_subcat = 'SELECT * ' \
                                    'FROM subcat_podcast ' \
@@ -158,7 +163,8 @@ def set_new_podcast(id_new_podcast, title_podcast, description_podcasts, categor
         cursor = connect().cursor()
 
         if uniq_keywords:
-            cursor.execute('INSERT INTO keywords (title_keyword) VALUES ("' + '"), ("'.join(uniq_keywords) + '")')
+            cursor.execute('INSERT INTO keywords (title_keyword) '
+                           'VALUES ("' + '"), ("'.join(uniq_keywords) + '")')
             connect().commit()
             query_for_get_keyword = 'SELECT * ' \
                                     'FROM keywords ' \
@@ -187,10 +193,18 @@ def change_url(id_podcast, new_url, status):
         Меняем юрл подкаста, если вдруг он с apple podcast
     """
 
-    if (not execute('SELECT * FROM url_podcasts WHERE url_podcast = %(p)s', new_url)) and (not execute('SELECT * FROM temp_table WHERE new_url = %(p)s', new_url)):
-        execute('INSERT INTO temp_table (new_url, status, id) VALUES (%(p)s, %(p)s, %(p)s)', new_url, status, id_podcast, commit=True)
+    if      status > 2 \
+            or \
+            (len(execute('SELECT * FROM url_podcasts WHERE url_podcast = %(p)s', new_url)) <= 1
+             and
+            not execute('SELECT * FROM temp_table WHERE new_url = %(p)s', new_url)):
+        execute('INSERT INTO temp_table (new_url, status, id) '
+                'VALUES (%(p)s, %(p)s, %(p)s)', new_url, status, id_podcast, commit=True)
+        return True
     else:
-        execute('INSERT INTO temp_table (status, id) VALUES (%(p)s, %(p)s)', -1, id_podcast,  commit=True)
+        execute('INSERT INTO temp_table (status, id) '
+                'VALUES (%(p)s, %(p)s)', -1, id_podcast,  commit=True)
+        return False
 
 
 def add_url_in_error_links(id_podcast, url, reason):
@@ -198,9 +212,13 @@ def add_url_in_error_links(id_podcast, url, reason):
         Добавляем запись в временную таблицу;
         Добавляем урл в таблицу с ошибками.
     """
-    execute('INSERT INTO temp_table (new_url, status, id) VALUES (%(p)s, %(p)s, %(p)s)', url, -1 , id_podcast, commit=True)
-    if not execute('SELECT * FROM error_links WHERE id = (%(p)s)', id_podcast):
-        execute('INSERT INTO error_links (url, id, reason) VALUES (%(p)s, %(p)s, %(p)s)', url, id_podcast, reason, commit=True)
+    execute('INSERT INTO temp_table (new_url, status, id) '
+            'VALUES (%(p)s, %(p)s, %(p)s)', url, -1 , id_podcast, commit=True)
+    if not execute('SELECT * '
+                   'FROM error_links '
+                   'WHERE id = (%(p)s)', id_podcast):
+        execute('INSERT INTO error_links (url, id, reason) '
+                'VALUES (%(p)s, %(p)s, %(p)s)', url, id_podcast, reason, commit=True)
 
 
 def set_new_item(id_of_podcast, list_of_items):
@@ -244,7 +262,9 @@ def set_new_item(id_of_podcast, list_of_items):
         connect().close()
         return
 
-    ids = tuple(row.get('id_item') for row in execute('SELECT id_item FROM items WHERE id_podcast = %(p)s', id_of_podcast))     # id-шники выпусков
+    ids = tuple(row.get('id_item') for row in execute('SELECT id_item '
+                                                      'FROM items '
+                                                      'WHERE id_podcast = %(p)s', id_of_podcast))     # id-шники выпусков
 
     keywords_used_in_items = tuple()
     for keywords in tuple(item[-1] for item in list_of_items):  # генерируем ключ слова без повторений
@@ -264,7 +284,8 @@ def set_new_item(id_of_podcast, list_of_items):
 
         if uniq_words:  # если уникальные слова всё-таки есть
             try:
-                cursor.execute(str('INSERT INTO keywords_items (title_keyword) VALUES ("' + '"), ("'.join(uniq_words) + '"), ("')[:-4])
+                cursor.execute(str('INSERT INTO keywords_items (title_keyword) '
+                                   'VALUES ("' + '"), ("'.join(uniq_words) + '"), ("')[:-4])
                 connect().commit()
             except Exception as e:
                 print('Ошибка в инсерте ключевых слов.')
@@ -295,5 +316,5 @@ def set_new_item(id_of_podcast, list_of_items):
         connect().close()
 
 
-def change_status(url, status, id_podcast):
-    execute('INSERT INTO temp_table (new_url, status, id) VALUES (%(p)s, %(p)s, %(p)s)', url, status, id_podcast, commit=True)
+change_status = lambda url, status, id_podcast:execute('INSERT INTO temp_table(new_url, status, id) '
+                                                       'VALUES(%(p)s, %(p)s, %(p)s)', url, status, id_podcast, commit=True)

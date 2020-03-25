@@ -20,7 +20,7 @@ def pre_parse():
                                         reason='Ссылка без http/https')
             continue
         try:
-            while threading.active_count() > 30:
+            while threading.active_count() > 25:
                 print('Sleep 1 sec')
                 time.sleep(1)
             else:
@@ -65,7 +65,7 @@ def parse(each_podcast, id_podcasts):
             html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
         except Exception as e:
             print(e)
-            util.add_url_in_error_links(each_podcast.get('url_podcast'), reason='Ureal connect closed port 443')
+            util.add_url_in_error_links(each_podcast.get('url_podcast'), reason='Unconnect closed port 443')
 
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
@@ -74,7 +74,12 @@ def parse(each_podcast, id_podcasts):
         util.add_url_in_error_links(id_podcasts, old_url, reason='Cant connected on rss')
         return
     except requests.exceptions.SSLError:  # если сайт плохой (заразный тип)
-        html = requests.get(each_podcast, verify=False).text
+        try:
+            html = requests.get(each_podcast, verify=False).text
+        except Exception as e:
+            print(e)
+            util.add_url_in_error_links(id_podcasts, old_url, reason='SSL error')
+            return
     except requests.exceptions.ConnectionError:
         util.add_url_in_error_links(id_podcasts, old_url, reason='Error (404 or 503)')
         return
@@ -82,14 +87,19 @@ def parse(each_podcast, id_podcasts):
         print('Нет коннекта - ', old_url)
         util.add_url_in_error_links(id_podcasts, old_url, reason='No access to iTunes from Russia')
         return
-
-    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
-        util.add_url_in_error_links(id_podcasts, each_podcast,
-                                    reason='Bad rss')
+    except Exception as e:  # если нет доступа по какой-то причине, в основном из-за страны
+        print('Неизвестная ошибка', e)
+        util.add_url_in_error_links(id_podcasts, old_url, reason='Unknown error')
         return
 
-    # заносим в бд изменение (если ссылки не изменны, то меняем только статус)
-    util.change_url(id_podcasts, each_podcast, 2)
+
+    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
+        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Bad rss')
+        return
+
+    # заносим в бд изменение (если ссылки не изменны, то меняем только статус) + если с урлом что-то не так не продолжаем его парсить
+    if util.change_url(id_podcasts, each_podcast, 2) is False:
+        return
 
     if html.find(' >') > -1:
         for tag in re.findall(r'<.*\s>', html):
