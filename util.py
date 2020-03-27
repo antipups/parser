@@ -302,7 +302,8 @@ def set_new_item(id_of_podcast, list_of_items):
         for item in enumerate(list_of_items):   #
             if item[1][-1]:
                 tuple_with_id_keywords = tuple(str(ids_of_new_words.get(keyword)) for keyword in item[1][-1])    # генерируем по словам айдишники
-                query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
+                if tuple_with_id_keywords:
+                    query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
 
         if len(query_for_connect_all[:-2]) != 60:   # если вдруг будет вылетать ошибка
             try:

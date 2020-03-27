@@ -1,6 +1,9 @@
 #!/home/tgpodcast/venv/bin/python
+import multiprocessing
 import re
 import time
+from datetime import datetime
+from datetime import timedelta
 import func_for_clear_text
 import threading
 import requests
@@ -33,29 +36,21 @@ def parse(each_podcast, id_podcasts):
         скаченности подкаста.
     """
     try:
-        if requests.get(each_podcast).status_code != 200:
-            raise requests.exceptions.ConnectionError
-        try:
-            html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
-        except Exception as e:
-            print(e)
-            util.add_url_in_error_links(each_podcast.get('url_podcast'), reason='Ureal connect closed port 443')
-
+        start = datetime.now()
+        Thread = multiprocessing.Process(target=requests.get, args=(each_podcast,))
+        Thread.start()
+        while Thread.is_alive() and datetime.now() - start < timedelta(seconds=60):
+            time.sleep(1)
+        else:
+            if Thread.is_alive():
+                Thread.kill()
+                util.add_url_in_error_links(id_podcasts, each_podcast, reason='Infinity load')
+                return
+        html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
-    except requests.exceptions.MissingSchema:
-        print('ERROR PARSE -- ' + each_podcast)
-        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Cant connected on rss')
-        return
-    except requests.exceptions.SSLError:  # если сайт плохой (заразный тип)
-        html = requests.get(each_podcast, verify=False).text
-    except requests.exceptions.ConnectionError:
-        util.add_url_in_error_links(id_podcasts, each_podcast, reason='Error (404 or 503)')
-        return
-    except requests.exceptions.InvalidSchema:  # если нет доступа по какой-то причине, в основном из-за страны
-        print('Нет коннекта - ', each_podcast)
-        util.add_url_in_error_links(id_podcasts, each_podcast, reason='No access to iTunes from Russia')
-        return
+    except Exception as e:
+        util.add_url_in_error_links(id_podcasts, each_podcast, reason=e)
 
     util.change_url(id_podcasts, each_podcast, 3)
 
