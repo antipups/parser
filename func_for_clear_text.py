@@ -59,10 +59,10 @@ def parse_category(html):   # парсим категории
             break
         html = html[html.find('category text="') + 15:]
         if html.find('>') < html.find('/>'):  # если у категории есть подкатегории
-            categorys += html[: html.find('"')] + ', '
+            categorys += html[: html.find('"')].replace('/', 'or') + ', '
             subcategorys_field = html[html.find('>') + 1: html.find('</itunes:category>')]
             while subcategorys_field.find('category text="') > -1:
-                subcategorys += subcategorys_field[subcategorys_field.find('category text="') + 15: subcategorys_field.rfind('"')]  + ', '
+                subcategorys += subcategorys_field[subcategorys_field.find('category text="') + 15: subcategorys_field.rfind('"')].replace('/', 'or') + ', '
                 subcategorys_field = subcategorys_field[subcategorys_field.find('/>') + 2:]
             html = html[html.find('</itunes:category>') + 18:]  # срезаем подкатегории
         else:
