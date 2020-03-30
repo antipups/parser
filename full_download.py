@@ -43,7 +43,7 @@ def parse(each_podcast, id_podcasts):
             time.sleep(1)
         else:
             if Thread.is_alive():
-                Thread.kill()
+                Thread.close()
                 util.add_url_in_error_links(id_podcasts, each_podcast, reason='Infinity load')
                 return
         html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту

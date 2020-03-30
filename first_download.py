@@ -65,9 +65,10 @@ def parse(each_podcast, id_podcasts):
         Thread.start()
         while Thread.is_alive() and datetime.now() - start < timedelta(seconds=60):
             time.sleep(1)
+            print('sleep')
         else:
             if Thread.is_alive():
-                Thread.kill()
+                Thread.close()
                 util.add_url_in_error_links(id_podcasts, old_url, reason='Infinity load')
                 return
 
@@ -108,6 +109,7 @@ def parse(each_podcast, id_podcasts):
         util.add_url_in_error_links(id_podcasts, each_podcast, reason='Bad rss')
         return
 
+    print('all ok')
     # заносим в бд изменение (если ссылки не изменны, то меняем только статус) + если с урлом что-то не так не продолжаем его парсить
     if util.change_url(id_podcasts, each_podcast, 2) is False:
         return
@@ -178,7 +180,7 @@ def parse(each_podcast, id_podcasts):
     html = html[html.find('<item>'):]  # обрезаем весь html до item
     amount_item = 0  # кол-во выпусков, качаем не более 50
     list_of_items = list()
-    while html.find('<item>') > -1 and amount_item < 50:  # до тех пор пока находим новый выпуск
+    while html.find('<item>') > -1 and amount_item < 1:  # до тех пор пока находим новый выпуск
         amount_item += 1
         # получаем блок с этим itemом, чтоб работать не по всей странице
         item_code = html[html.find('<item>') + 7: html.find('</item>')]

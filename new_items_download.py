@@ -22,11 +22,7 @@ def pre_parse():
                 time.sleep(1)
             else:
                 print('id url: ', each_podcast['id'])
-
-                if not util.exist_channel(each_podcast.get('id')):
-                    print('start url:   ', each_podcast.get('url_podcast'))
-                    threading.Thread(target=parse, args=(
-                    each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
+                threading.Thread(target=parse, args=(each_podcast.get('url_podcast'), each_podcast.get('id'))).start()  # ебашим всё в потоки
                 # parse(each_podcast.get('url_podcast'))   # парсим по одному без потоков
         except requests.exceptions.ConnectionError:
             util.add_url_in_error_links(each_podcast.get('url_podcast'))
@@ -45,7 +41,7 @@ def parse(each_podcast, id_podcasts):
             time.sleep(1)
         else:
             if Thread.is_alive():
-                Thread.kill()
+                Thread.close()
                 util.add_url_in_error_links(id_podcasts, each_podcast, reason='Infinity load')
                 return
         html = requests.get(each_podcast).content.decode('utf-8')  # получаем саму ленту
