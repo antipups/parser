@@ -12,7 +12,7 @@ def check_on_shit(string):      # чистим полученные строки
 
 def encode_from_html(string):   # перекодировка из html символов в обычные, бекап в коммитах
     if re.search(r'&#x[\d\w]{1,4};', string) is not None:   # если вдруг попалась 16-ичная система
-        for word in re.findall(r'&#[\d\w]{1,4};', string):
+        for word in re.findall(r'&#x[\d\w]{1,4};', string):
             string = re.sub(word, chr(int(word[word.rfind('x') + 1:-1], 16)), string)
 
     if re.search(r'&#\d{1,4};', string) is not None:

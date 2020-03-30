@@ -136,7 +136,7 @@ def parse(each_podcast, id_podcasts):
         html = html[html.find('</item>') + 7:]  # режем ту строку с которой отработали, и идем далее
         print('Название выпуска: ' + title_item + '\n')
 
-    util.set_new_item(id_podcasts, list_of_items)
+    util.set_new_item(id_podcasts, list_of_items[::-1])
 
 
 if __name__ == '__main__':

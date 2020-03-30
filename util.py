@@ -50,7 +50,7 @@ def execute(sql, *args, commit=False):
 #   получаем все подкасты одного статуса
 get_podcast_url = lambda status: execute('SELECT * '
                                          'FROM url_podcasts '
-                                         'WHERE status_podcast = %(p)s', status)
+                                         'WHERE status_podcast = %(p)s ORDER BY `id` DESC LIMIT 25', status)
 
 
 # существует ли с таким id подкаст
@@ -181,11 +181,11 @@ def set_new_podcast(id_new_podcast, title_podcast, description_podcasts, categor
         connect().close()
 
 
-def check_item(id_podcast, audio):    # проверка на то , есть ли выпуск или нет
-    return bool(execute('SELECT title_audio '
-                        'FROM items '
-                        'WHERE id_podcast = %(p)s '
-                        '   AND audio = %(p)s', id_podcast, audio))
+# проверка на то , есть ли выпуск или нет
+check_item = lambda id_podcast, audio: bool(execute('SELECT title_audio '
+                                                    'FROM items '
+                                                    'WHERE id_podcast = %(p)s '
+                                                    '   AND audio = %(p)s', id_podcast, audio))
 
 
 def change_url(id_podcast, new_url, status):
@@ -212,8 +212,12 @@ def add_url_in_error_links(id_podcast, url, reason):
         Добавляем запись в временную таблицу;
         Добавляем урл в таблицу с ошибками.
     """
-    execute('INSERT INTO temp_table (new_url, status, id) '
-            'VALUES (%(p)s, %(p)s, %(p)s)', url, -1 , id_podcast, commit=True)
+    try:
+        execute('INSERT INTO temp_table (new_url, status, id) '
+                'VALUES (%(p)s, %(p)s, %(p)s)', url, -1 , id_podcast, commit=True)
+    except Exception as e:
+        print(e)
+        return
     if not execute('SELECT * '
                    'FROM error_links '
                    'WHERE id = (%(p)s)', id_podcast):
@@ -230,10 +234,12 @@ def set_new_item(id_of_podcast, list_of_items):
     """
 
     query = 'INSERT INTO items (id_podcast, title_audio, description_audio, audio, image_audio, pubdata_audio, duration_audio) ' \
-            'VALUES '       # строка на дополнение к запросу
+            'VALUES ('       # строка на дополнение к запросу
 
-    for item in list_of_items:
-        title, description, audio, image, pubdata, duration = item[:-1]     # именуем все полученные элементы (чтоб с ними было удобней работать)
+    string_with_items = str()
+
+    for item in enumerate(list_of_items[::-1]):
+        title, description, audio, image, pubdata, duration = item[1][:-1]     # именуем все полученные элементы (чтоб с ними было удобней работать)
 
         # если ничего нет - зануляем
         description = 'NULL' if not description else '"' + description + '"'
@@ -246,21 +252,29 @@ def set_new_item(id_of_podcast, list_of_items):
             title = title.replace('"', '""')
         if description and description.find('"') > -1:
             description = description.replace('"', '""')[1:-1]
-        query += '({}, "{}", {}, {}, {}, {}, {}), '.format(id_of_podcast, title, description, audio, image, pubdata, duration)
-    else:
-        query = query[:-2]
 
-    if query.endswith('VALUE'):   # выпусков НЕТ АЛЛО
+        # list_of_items_to_insert.append((id_of_podcast, title, description, audio, image, pubdata, duration))
+        if item[0] % 50 == 0 and item[0] != 0:     # для деления, по 50
+            string_with_items += '|||'
+        string_with_items += '({}, "{}", {}, {}, {}, {}, {}), '.format(id_of_podcast, title, description, audio, image, pubdata, duration)
+
+    if not string_with_items:   # выпусков НЕТ АЛЛО
+        print('Нет выпусков АЛЛО')
         return
 
-    try:
-        cursor = connect().cursor()         # открываемванльный коннекшин
-        cursor.execute(query)
-        connect().commit()
-    except Exception as e:
-        print('Назакомитились выпуски.')
-        connect().close()
-        return
+    cursor = connect().cursor()  # открываемванльный коннекшин
+    for tuple_of_items in string_with_items.split('|||'):  # делим строку по 50
+        try:
+            execute(query + tuple_of_items[1:-2], commit=True)
+            print('start commit item')
+        except Exception as e:
+            try:
+                cursor.execute(query + tuple_of_items[1:-2])
+                connect().commit()
+            except Exception as e:
+                print('Назакомитились выпуски.', id_of_podcast, e)
+                connect().close()
+                return
 
     ids = tuple(row.get('id_item') for row in execute('SELECT id_item '
                                                       'FROM items '
@@ -274,6 +288,7 @@ def set_new_item(id_of_podcast, list_of_items):
     query_for_get = 'SELECT * ' \
                     'FROM keywords_items ' \
                     'WHERE ' + 'title_keyword IN ("' + '", "'.join(keywords_used_in_items) + '")'
+
 
     try:
         keywords_already_in_db = tuple(execute(query_for_get))
@@ -289,6 +304,7 @@ def set_new_item(id_of_podcast, list_of_items):
                 connect().commit()
             except Exception as e:
                 print('Ошибка в инсерте ключевых слов.')
+                print(e)
                 connect().close()   # если вдруг что-то пошло не так, ОБЯЗАТЕЛЬНО ЗАКРЫВАЕМ конекшин
                 return
             # запрос на получение айди только НОВЫХ ключ. слов, то есть тех которые были добавленны благодаря новым выпускам
@@ -302,8 +318,7 @@ def set_new_item(id_of_podcast, list_of_items):
         for item in enumerate(list_of_items):   #
             if item[1][-1]:
                 tuple_with_id_keywords = tuple(str(ids_of_new_words.get(keyword)) for keyword in item[1][-1])    # генерируем по словам айдишники
-                if tuple_with_id_keywords:
-                    query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
+                query_for_connect_all += '(' + str(ids[item[0]]) + ', ' + '), ({}, '.format(str(ids[item[0]])).join(tuple_with_id_keywords) + '), '
 
         if len(query_for_connect_all[:-2]) != 60:   # если вдруг будет вылетать ошибка
             try:
@@ -311,9 +326,9 @@ def set_new_item(id_of_podcast, list_of_items):
             except Exception as e:
                 print('Проблема в коннекте ключ. слов и выпуска.')
                 connect().close()
+                return
             else:
                 connect().commit()
-
         connect().close()
 
 
