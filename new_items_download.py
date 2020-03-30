@@ -48,10 +48,10 @@ def parse(each_podcast, id_podcasts):
     except UnicodeDecodeError:
         html = requests.get(each_podcast).text
     except Exception as e:
-        util.add_url_in_error_links(id_podcasts, each_podcast, reason=e)
+        util.add_url_in_error_links(id_podcasts, each_podcast, reason="Bad rss")
 
 
-    if html.find(' >') > -1:
+    if html and html.find(' >') > -1:
         for tag in re.findall(r'<.*\s>', html):
             try:
                 html = re.sub(tag, tag[:-2] + tag[-1], html)

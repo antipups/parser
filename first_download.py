@@ -105,7 +105,7 @@ def parse(each_podcast, id_podcasts):
         util.add_url_in_error_links(id_podcasts, old_url, reason='Unknown error')
         return
 
-    if html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
+    if not html or html[:html.find('<item>')].find('feeds.feedburner') > -1 or len(re.findall(r'<script[^>]*', html)) > 2 or each_podcast.startswith('unes error'):
         util.add_url_in_error_links(id_podcasts, each_podcast, reason='Bad rss')
         return
 
@@ -113,7 +113,7 @@ def parse(each_podcast, id_podcasts):
     if util.change_url(id_podcasts, each_podcast, 2) is False:
         return
 
-    if html.find(' >') > -1:
+    if html and html.find(' >') > -1:
         for tag in re.findall(r'<.*\s>', html):
             try:
                 html = re.sub(tag, tag[:-2] + tag[-1], html)

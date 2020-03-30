@@ -215,14 +215,14 @@ def add_url_in_error_links(id_podcast, url, reason):
     try:
         execute('INSERT INTO temp_table (new_url, status, id) '
                 'VALUES (%(p)s, %(p)s, %(p)s)', url, -1 , id_podcast, commit=True)
+        if not execute('SELECT * '
+                       'FROM error_links '
+                       'WHERE id = (%(p)s)', id_podcast):
+            execute('INSERT INTO error_links (url, id, reason) '
+                    'VALUES (%(p)s, %(p)s, %(p)s)', url, id_podcast, reason, commit=True)
     except Exception as e:
         print(e)
         return
-    if not execute('SELECT * '
-                   'FROM error_links '
-                   'WHERE id = (%(p)s)', id_podcast):
-        execute('INSERT INTO error_links (url, id, reason) '
-                'VALUES (%(p)s, %(p)s, %(p)s)', url, id_podcast, reason, commit=True)
 
 
 def set_new_item(id_of_podcast, list_of_items):
