@@ -26,6 +26,8 @@ if __name__ == '__main__':
     util.execute('TRUNCATE cat_item', commit=True)
     util.execute('TRUNCATE url_podcasts', commit=True)
     util.execute('TRUNCATE temp_table', commit=True)
+    # parse('https://mojomedia.ru/feed-podcasts/rebyata-my-potrahalis')
+    parse('https://feeds.podcastmirror.com/zavtracast')
     # with open('parse_link.txt', 'r') as f:
     #     for i in enumerate(f.readlines()):
             # if i[0] < 100:
@@ -41,4 +43,4 @@ if __name__ == '__main__':
     # parse('https://feeds.podcastmirror.com/zavtracast')
     # parse('https://radiomayak.ru/podcasts/rss/podcast/2441')
     # parse('https://radiomayak.ru/podcasts/rss/podcast/2441')
-    parse('https://vk.com/podcasts-64599002.rss')
+    # parse('https://vk.com/podcasts-64599002.rss')

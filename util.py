@@ -3,14 +3,6 @@ import config
 
 paramstyle = "%s"
 
-
-def deploy_database():
-    """
-     Создать нужные таблицы в базе данных
-    """
-    pass
-
-
 def connect():
     """
      Подключение к базе данных
@@ -34,13 +26,18 @@ def execute(sql, *args, commit=False):
     cur = db.cursor()
     try:
         cur.execute(sql % {"p": paramstyle}, args)
-    except pymysql.err.InternalError as e:
+    except pymysql.err.InternalError as e:  # обработайся тут сука
         if sql.find('texts') == -1:
             print('Cannot execute mysql request: ' + str(e))
-        return
+        return 'Error'
+    except ValueError:  # если вдруг ошибка с символами
+        return 'unsupported format character'
+    except:
+        return "hz"
     if commit:
         db.commit()
         db.close()
+        return True
     else:
         ans = cur.fetchall()
         db.close()
@@ -263,18 +260,16 @@ def set_new_item(id_of_podcast, list_of_items):
         return
 
     cursor = connect().cursor()  # открываемванльный коннекшин
-    for tuple_of_items in string_with_items.split('|||'):  # делим строку по 50
-        try:
-            execute(query + tuple_of_items[1:-2], commit=True)
-            print('start commit item')
-        except Exception as e:
-            try:
+    try:
+        for tuple_of_items in string_with_items.split('|||'):  # делим строку по 50
+            if execute(query + tuple_of_items[1:-2], commit=True) is not True:
+                # print(query + tuple_of_items[1:-2])
                 cursor.execute(query + tuple_of_items[1:-2])
                 connect().commit()
-            except Exception as e:
-                print('Назакомитились выпуски.', id_of_podcast, e)
-                connect().close()
-                return
+    except Exception as e:
+        print('Назакомитились выпуски.', id_of_podcast, e)
+        connect().close()
+        return
 
     ids = tuple(row.get('id_item') for row in execute('SELECT id_item '
                                                       'FROM items '
